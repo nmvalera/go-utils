@@ -1,0 +1,51 @@
+# This file is used by the release workflow to generate a draft release on GitHub.
+# It bases on Pull Requests and their labels to generate the changelog.
+category-template: '### $TITLE'
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+change-template: '* $TITLE (#$NUMBER) by @$AUTHOR'
+template: |
+  ## Overview
+  
+  ## Changes
+  
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
+
+categories:
+  - title: '✨ Features'
+    label: 'type.feat'
+  - title: '🐛 Bug fixes'
+    label: 'type.fix'
+  - title: '🧹 Chore'
+    label: 'type.chore'
+  - title: '🧪 Tests'
+    label: 'type.test'
+  - title: '🏭 DevOps'
+    label: 'type.devops'
+  - title: '📝 Documentation'
+    label: 'type.docs'
+  - title: '💥 BREAKING CHANGES'
+    label: 'breaking-change'
+
+version-resolver:
+  # Major is not meant to be used before v1.0.0
+  # Should be used with label breaking-change in the future.
+  # major:
+  #   labels:
+  #     - 'breaking-change'
+  minor:
+    labels:
+      - 'type.feat'
+      - 'bump.minor'
+  patch:
+    labels:
+      - 'type.fix'
+      - 'type.chore'
+      - 'type.docs'
+      - 'type.test'
+      - 'type.devops'
+
+exclude-labels:
+  - 'skip-changelog'
