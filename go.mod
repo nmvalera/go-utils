@@ -8,7 +8,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/ethereum/go-ethereum v1.14.12
-	github.com/gorilla/websocket v1.5.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/holiman/uint256 v1.3.2
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
