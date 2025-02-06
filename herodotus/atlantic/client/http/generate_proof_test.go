@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	atlantic "github.com/kkrt-labs/kakarot-controller/src/prover/atlantic/client"
+	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

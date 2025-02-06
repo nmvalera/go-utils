@@ -13,7 +13,7 @@ This package provides:
 ## Installation
 
 ```sh
-go get github.com/kkrt-labs/go-utils/atlantic
+go get github.com/kkrt-labs/go-utils/herodotus/atlantic
 ```
 
 ## Authentication
@@ -28,8 +28,8 @@ All API endpoints require authentication using an API key. You can obtain one by
 
 ```go
 import (
-    atlantic "github.com/kkrt-labs/kakarot-controller/go-utils/atlantic/client"
-    atlantichttp "github.com/kkrt-labs/kakarot-controller/go-utils/atlantic/client/http"
+    atlantic "github.com/kkrt-labs/kakarot-controller/go-utils/herodotus-atlantic/client"
+    atlantichttp "github.com/kkrt-labs/kakarot-controller/go-utils/herodotus-atlantic/client/http"
 )
 
 // Create client with configuration

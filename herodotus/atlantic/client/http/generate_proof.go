@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	atlantic "github.com/kkrt-labs/kakarot-controller/src/prover/atlantic/client"
+	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
 )
 
 func (c *Client) GenerateProof(ctx context.Context, req *atlantic.GenerateProofRequest) (*atlantic.GenerateProofResponse, error) {

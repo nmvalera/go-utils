@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	atlantic "github.com/kkrt-labs/kakarot-controller/src/prover/atlantic/client"
+	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
 )
 
 type atlanticQueryRespMsg struct {

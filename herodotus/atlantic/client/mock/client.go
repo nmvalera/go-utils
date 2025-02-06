@@ -13,9 +13,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	atlantic "github.com/kkrt-labs/kakarot-controller/src/prover/atlantic/client"
+	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
 	gomock "go.uber.org/mock/gomock"
 )
+
 
 // MockClient is a mock of Client interface.
 type MockClient struct {
