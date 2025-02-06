@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	ethproofs "github.com/kkrt-labs/kakarot-controller/src/ethproofs/client"
+	ethproofs "github.com/kkrt-labs/go-utils/ethproofs/client"
 )
 
 func (c *Client) CreateMachine(ctx context.Context, req *ethproofs.CreateMachineRequest) (*ethproofs.CreateMachineResponse, error) {
