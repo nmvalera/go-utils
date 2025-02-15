@@ -2,7 +2,7 @@ package tag
 
 var EmptySet = Set{}
 
-// Set reprensents a immutable set of
+// Set represents a immutable set of
 type Set []*Tag
 
 // WithTags returns a new set with the given tags added to the set. If a tag with the same key already exists in the set,
