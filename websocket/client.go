@@ -11,7 +11,7 @@ import (
 	comurl "github.com/kkrt-labs/go-utils/net/url"
 )
 
-// ClinetConfig is the configuration for the websocket client
+// ClientConfig is the configuration for the websocket client
 type ClientConfig struct {
 	Dialer *DialerConfig
 
