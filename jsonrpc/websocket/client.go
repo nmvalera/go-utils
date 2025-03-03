@@ -70,7 +70,7 @@ func (c *Client) Call(ctx context.Context, r *jsonrpc.Request, res interface{}) 
 	return c.call(ctx, r, res)
 }
 
-// decode decodes a JSON-RPC response message from an incoming Websocket messag
+// decode decodes a JSON-RPC response message from an incoming Websocket message
 type operation struct {
 	result chan *jsonrpc.ResponseMsg
 }
