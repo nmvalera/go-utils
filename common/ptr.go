@@ -11,7 +11,7 @@ func Ptr[T any](v T) *T {
 // If the pointer is nil, it returns the zero value of the type.
 func Val[T any](v *T) T {
 	if v == nil {
-		return reflect.Zero(reflect.TypeOf(v).Elem()).Interface().(T)
+		return reflect.Zero(reflect.TypeOf(*v)).Interface().(T)
 	}
 	return *v
 }
