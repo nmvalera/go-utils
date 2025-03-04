@@ -32,6 +32,12 @@ func TestParseConfig(t *testing.T) {
 			NameEncoder:      "full",
 			ConsoleSeparator: "\t",
 		},
+		Sampling: SamplingConfig{
+			Initial:    100,
+			Thereafter: 100,
+		},
+		OutputPaths:      []string{"stderr"},
+		ErrorOutputPaths: []string{"stderr"},
 	}
 
 	zapCfg, err := ParseConfig(cfg)
@@ -53,6 +59,16 @@ func TestParseConfig(t *testing.T) {
 	assert.False(t, encoderCfg.SkipLineEnding)
 	assert.Equal(t, "\n", encoderCfg.LineEnding)
 	assert.Equal(t, "\t", encoderCfg.ConsoleSeparator)
+
+	samplingCfg := zapCfg.Sampling
+	assert.Equal(t, 100, samplingCfg.Initial)
+	assert.Equal(t, 100, samplingCfg.Thereafter)
+
+	outputPaths := zapCfg.OutputPaths
+	assert.Equal(t, []string{"stderr"}, outputPaths)
+
+	errorOutputPaths := zapCfg.ErrorOutputPaths
+	assert.Equal(t, []string{"stderr"}, errorOutputPaths)
 }
 
 func TestViperConfig(t *testing.T) {
@@ -79,6 +95,10 @@ func TestViperConfig(t *testing.T) {
 	viper.Set("log.encoder.caller-encoder", "short")
 	viper.Set("log.encoder.name-encoder", "full")
 	viper.Set("log.encoder.console-separator", "\t")
+	viper.Set("log.sampling.initial", 100)
+	viper.Set("log.sampling.thereafter", 100)
+	viper.Set("log.output-paths", []string{"stderr"})
+	viper.Set("log.error-output-paths", []string{"stderr"})
 
 	var cfg TestConfig
 	err := viper.Unmarshal(&cfg)
@@ -100,4 +120,11 @@ func TestViperConfig(t *testing.T) {
 	assert.False(t, encoderCfg.SkipLineEnding)
 	assert.Equal(t, "\n", encoderCfg.LineEnding)
 	assert.Equal(t, "\t", encoderCfg.ConsoleSeparator)
+
+	samplingCfg := cfg.Log.Sampling
+	assert.Equal(t, 100, samplingCfg.Initial)
+	assert.Equal(t, 100, samplingCfg.Thereafter)
+
+	assert.Equal(t, []string{"stderr"}, cfg.Log.OutputPaths)
+	assert.Equal(t, []string{"stderr"}, cfg.Log.ErrorOutputPaths)
 }

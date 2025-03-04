@@ -328,6 +328,11 @@ func ParseEncoderConfig(cfg *EncoderConfig) (*zapcore.EncoderConfig, error) {
 	return &zapCfg, nil
 }
 
+type SamplingConfig struct {
+	Initial    int `mapstructure:"initial"`
+	Thereafter int `mapstructure:"thereafter"`
+}
+
 // Config is the configuration for the logger.
 // It can be used in conjunction with viper.
 //
@@ -353,11 +358,14 @@ func ParseEncoderConfig(cfg *EncoderConfig) (*zapcore.EncoderConfig, error) {
 //	 	fmt.Printf("Config: %+v", cfg)
 //	 }
 type Config struct {
-	Format           string        `mapstructure:"format"`
-	Level            string        `mapstructure:"level"`
-	EnableStacktrace bool          `mapstructure:"enable-stacktrace"`
-	EnableCaller     bool          `mapstructure:"enable-caller"`
-	Encoder          EncoderConfig `mapstructure:"encoder"`
+	Format           string         `mapstructure:"format"`
+	Level            string         `mapstructure:"level"`
+	EnableStacktrace bool           `mapstructure:"enable-stacktrace"`
+	EnableCaller     bool           `mapstructure:"enable-caller"`
+	Encoder          EncoderConfig  `mapstructure:"encoder"`
+	Sampling         SamplingConfig `mapstructure:"sampling"`
+	OutputPaths      []string       `mapstructure:"output-paths"`
+	ErrorOutputPaths []string       `mapstructure:"error-output-paths"`
 }
 
 func ParseConfig(cfg *Config) (*zap.Config, error) {
@@ -365,6 +373,10 @@ func ParseConfig(cfg *Config) (*zap.Config, error) {
 		DisableStacktrace: !cfg.EnableStacktrace,
 		DisableCaller:     !cfg.EnableCaller,
 		Level:             zap.NewAtomicLevel(),
+		Sampling: &zap.SamplingConfig{
+			Initial:    cfg.Sampling.Initial,
+			Thereafter: cfg.Sampling.Thereafter,
+		},
 	}
 
 	// Log Level

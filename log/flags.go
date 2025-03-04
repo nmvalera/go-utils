@@ -144,6 +144,34 @@ var (
 		Description:  "Log console separator",
 		DefaultValue: common.Ptr("\t"),
 	}
+	logSamplingInitialFlag = &spf13.IntFlag{
+		ViperKey:     "log.sampling.initial",
+		Name:         "log-sampling-initial",
+		Env:          "LOG_SAMPLING_INITIAL",
+		Description:  "Log sampling initial",
+		DefaultValue: common.Ptr(100),
+	}
+	logSamplingThereafterFlag = &spf13.IntFlag{
+		ViperKey:     "log.sampling.thereafter",
+		Name:         "log-sampling-thereafter",
+		Env:          "LOG_SAMPLING_THEREAFTER",
+		Description:  "Log sampling thereafter",
+		DefaultValue: common.Ptr(100),
+	}
+	logOutputPathsFlag = &spf13.StringArrayFlag{
+		ViperKey:     "log.output-paths",
+		Name:         "log-output-paths",
+		Env:          "LOG_OUTPUT_PATHS",
+		Description:  "Log output paths",
+		DefaultValue: []string{"stderr"},
+	}
+	logErrorOutputPathsFlag = &spf13.StringArrayFlag{
+		ViperKey:     "log.error-output-paths",
+		Name:         "log-error-output-paths",
+		Env:          "LOG_ERROR_OUTPUT_PATHS",
+		Description:  "Log error output paths",
+		DefaultValue: []string{"stderr"},
+	}
 )
 
 func AddFlags(v *viper.Viper, f *pflag.FlagSet) {
@@ -166,4 +194,8 @@ func AddFlags(v *viper.Viper, f *pflag.FlagSet) {
 	logEncoderCallerEncoderFlag.Add(v, f)
 	logEncoderNameEncoderFlag.Add(v, f)
 	logEncoderConsoleSeparatorFlag.Add(v, f)
+	logSamplingInitialFlag.Add(v, f)
+	logSamplingThereafterFlag.Add(v, f)
+	logOutputPathsFlag.Add(v, f)
+	logErrorOutputPathsFlag.Add(v, f)
 }
