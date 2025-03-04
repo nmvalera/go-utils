@@ -3,6 +3,7 @@ package time
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -13,6 +14,7 @@ type Duration struct {
 
 // UnmarshalJSON unmarshals a JSON duration from format "1h2m3s"
 func (d *Duration) UnmarshalJSON(b []byte) (err error) {
+	// Если это строка в формате "1h2m3s"
 	if b[0] == '"' {
 		sd := string(b[1 : len(b)-1])
 		d.Duration, err = time.ParseDuration(sd)
@@ -20,7 +22,10 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 	}
 
 	var id int64
-	id, err = json.Number(b).Int64()
+	id, err = strconv.ParseInt(string(b), 10, 64)
+	if err != nil {
+		return err
+	}
 	d.Duration = time.Duration(id)
 
 	return
