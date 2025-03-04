@@ -148,14 +148,14 @@ var (
 		ViperKey:     "log.sampling.initial",
 		Name:         "log-sampling-initial",
 		Env:          "LOG_SAMPLING_INITIAL",
-		Description:  "Log sampling initial",
+		Description:  "Count of cumulated log entries with same level and message to log before starting to sample logs",
 		DefaultValue: common.Ptr(100),
 	}
 	logSamplingThereafterFlag = &spf13.IntFlag{
 		ViperKey:     "log.sampling.thereafter",
 		Name:         "log-sampling-thereafter",
 		Env:          "LOG_SAMPLING_THEREAFTER",
-		Description:  "Log sampling thereafter",
+		Description:  "Once sampling log every thereafter'th log entry with same level and message",
 		DefaultValue: common.Ptr(100),
 	}
 	logOutputPathsFlag = &spf13.StringArrayFlag{

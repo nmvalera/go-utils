@@ -377,6 +377,8 @@ func ParseConfig(cfg *Config) (*zap.Config, error) {
 			Initial:    cfg.Sampling.Initial,
 			Thereafter: cfg.Sampling.Thereafter,
 		},
+		OutputPaths:      cfg.OutputPaths,
+		ErrorOutputPaths: cfg.ErrorOutputPaths,
 	}
 
 	// Log Level
