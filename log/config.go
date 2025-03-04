@@ -249,21 +249,21 @@ var zapNameEncoders = map[NameEncoder]zapcore.NameEncoder{
 }
 
 type EncoderConfig struct {
-	MessageKey       string
-	LevelKey         string
-	TimeKey          string
-	NameKey          string
-	CallerKey        string
-	FunctionKey      string
-	StacktraceKey    string
-	SkipLineEnding   bool
-	LineEnding       string
-	LevelEncoder     string
-	TimeEncoder      string
-	DurationEncoder  string
-	CallerEncoder    string
-	NameEncoder      string
-	ConsoleSeparator string
+	MessageKey       string `mapstructure:"message-key"`
+	LevelKey         string `mapstructure:"level-key"`
+	TimeKey          string `mapstructure:"time-key"`
+	NameKey          string `mapstructure:"name-key"`
+	CallerKey        string `mapstructure:"caller-key"`
+	FunctionKey      string `mapstructure:"function-key"`
+	StacktraceKey    string `mapstructure:"stacktrace-key"`
+	SkipLineEnding   bool   `mapstructure:"skip-line-ending"`
+	LineEnding       string `mapstructure:"line-ending"`
+	LevelEncoder     string `mapstructure:"level-encoder"`
+	TimeEncoder      string `mapstructure:"time-encoder"`
+	DurationEncoder  string `mapstructure:"duration-encoder"`
+	CallerEncoder    string `mapstructure:"caller-encoder"`
+	NameEncoder      string `mapstructure:"name-encoder"`
+	ConsoleSeparator string `mapstructure:"console-separator"`
 }
 
 func ParseEncoderConfig(cfg *EncoderConfig) (*zapcore.EncoderConfig, error) {
@@ -329,11 +329,11 @@ func ParseEncoderConfig(cfg *EncoderConfig) (*zapcore.EncoderConfig, error) {
 }
 
 type Config struct {
-	Level            string
-	Format           string
-	EnableStacktrace bool
-	EnableCaller     bool
-	Encoder          *EncoderConfig
+	Format           string         `mapstructure:"format"`
+	Level            string         `mapstructure:"level"`
+	EnableStacktrace bool           `mapstructure:"enable-stacktrace"`
+	EnableCaller     bool           `mapstructure:"enable-caller"`
+	Encoder          *EncoderConfig `mapstructure:"encoder"`
 }
 
 func ParseConfig(cfg *Config) (*zap.Config, error) {
