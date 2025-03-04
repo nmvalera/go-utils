@@ -100,3 +100,27 @@ func FlagDesc(desc, envVar string) string {
 
 	return desc
 }
+
+type IntFlag struct {
+	ViperKey     string
+	Name         string
+	Shorthand    string
+	Env          string
+	Description  string
+	DefaultValue *int
+}
+
+func (flag *IntFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
+	if flag.Name != "" {
+		if flag.Shorthand != "" {
+			f.IntP(flag.Name, flag.Shorthand, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+		} else {
+			f.Int(flag.Name, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+		}
+		_ = v.BindPFlag(flag.ViperKey, f.Lookup(flag.Name))
+	}
+	if flag.Env != "" {
+		_ = v.BindEnv(flag.ViperKey, flag.Env)
+	}
+	v.SetDefault(flag.ViperKey, flag.DefaultValue)
+}

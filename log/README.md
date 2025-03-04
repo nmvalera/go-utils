@@ -172,6 +172,36 @@ Controls the separator used in console output format.
 - Environment: `LOG_ENCODER_CONSOLE_SEPARATOR`
 - Default: `\t` (tab)
 
+#### Sampling
+
+Controls the sampling rate for the logs.
+
+- Initial
+  - Flag: `--log-sampling-initial`
+  - Environment: `LOG_SAMPLING_INITIAL`
+  - Default: `100`
+
+- Thereafter
+  - Flag: `--log-sampling-thereafter`
+  - Environment: `LOG_SAMPLING_THEREAFTER`
+  - Default: `100`
+
+#### Output Paths
+
+Controls the output paths for the logs.
+
+- Flag: `--log-output-paths`
+- Environment: `LOG_OUTPUT_PATHS`
+- Default: `stderr`
+
+#### Error Output Paths
+
+Controls the error output paths for the logs.
+
+- Flag: `--log-error-output-paths`
+- Environment: `LOG_ERROR_OUTPUT_PATHS`
+- Default: `stderr`
+
 ## Example Usage
 
 Using flags:

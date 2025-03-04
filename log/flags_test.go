@@ -30,4 +30,8 @@ func TestAddFlags(t *testing.T) {
 	assert.Equal(t, "short", v.GetString("log.encoder.caller-encoder"))
 	assert.Equal(t, "full", v.GetString("log.encoder.name-encoder"))
 	assert.Equal(t, "\t", v.GetString("log.encoder.console-separator"))
+	assert.Equal(t, 100, v.GetInt("log.sampling.initial"))
+	assert.Equal(t, 100, v.GetInt("log.sampling.thereafter"))
+	assert.Equal(t, []string{"stderr"}, v.GetStringSlice("log.output-paths"))
+	assert.Equal(t, []string{"stderr"}, v.GetStringSlice("log.error-output-paths"))
 }
