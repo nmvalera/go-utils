@@ -328,12 +328,36 @@ func ParseEncoderConfig(cfg *EncoderConfig) (*zapcore.EncoderConfig, error) {
 	return &zapCfg, nil
 }
 
+// Config is the configuration for the logger.
+// It can be used in conjunction with viper.
+//
+// Example:
+//
+//	 import "github.com/kkrt-labs/go-utils/log"
+//
+//	 cfg := &log.Config{
+//			Log log.Config `mapstructure:"log"`
+//	 }
+//
+//	 viper.Set("log.format", "json")
+//	 viper.Set("log.level", "info")
+//	 viper.Set("log.enable-stacktrace", true)
+//	 viper.Set("log.enable-caller", true)
+//	 viper.Set("log.encoder.message-key", "msg")
+//
+//	 var cfg Config
+//	 err := viper.Unmarshal(&cfg)
+//	 if err != nil {
+//	 	fmt.Printf("Failed to unmarshal config: %v", err)
+//	 } else {
+//	 	fmt.Printf("Config: %+v", cfg)
+//	 }
 type Config struct {
-	Format           string         `mapstructure:"format"`
-	Level            string         `mapstructure:"level"`
-	EnableStacktrace bool           `mapstructure:"enable-stacktrace"`
-	EnableCaller     bool           `mapstructure:"enable-caller"`
-	Encoder          *EncoderConfig `mapstructure:"encoder"`
+	Format           string        `mapstructure:"format"`
+	Level            string        `mapstructure:"level"`
+	EnableStacktrace bool          `mapstructure:"enable-stacktrace"`
+	EnableCaller     bool          `mapstructure:"enable-caller"`
+	Encoder          EncoderConfig `mapstructure:"encoder"`
 }
 
 func ParseConfig(cfg *Config) (*zap.Config, error) {
@@ -358,7 +382,7 @@ func ParseConfig(cfg *Config) (*zap.Config, error) {
 	zapCfg.Encoding = zapFormats[format]
 
 	// Encoder Config
-	encoderCfg, err := ParseEncoderConfig(cfg.Encoder)
+	encoderCfg, err := ParseEncoderConfig(&cfg.Encoder)
 	if err != nil {
 		return nil, err
 	}
