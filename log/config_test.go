@@ -15,7 +15,7 @@ func TestParseConfig(t *testing.T) {
 		Format:           "json",
 		EnableStacktrace: true,
 		EnableCaller:     true,
-		Encoder: &EncoderConfig{
+		Encoder: EncoderConfig{
 			MessageKey:       "msg",
 			LevelKey:         "level",
 			TimeKey:          "time",
