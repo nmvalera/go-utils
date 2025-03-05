@@ -93,7 +93,7 @@ func (c *Client) call(ctx context.Context, r *jsonrpc.Request, res interface{}) 
 	}
 	defer close(op.result)
 
-	// We need to lock the inflights map as we are accessing it concurrenltly
+	// We need to lock the inflights map as we are accessing it concurrently
 	c.mux.Lock()
 	c.inflights[r.ID] = op
 	c.mux.Unlock()
