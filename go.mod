@@ -1,8 +1,7 @@
 module github.com/kkrt-labs/go-utils
 
 go 1.22.0
-
-toolchain go1.22.9
+toolchain go1.23.7
 
 require (
 	github.com/Azure/go-autorest/autorest v0.11.30
@@ -19,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/net v0.35.0
+	golang.org/x/net v0.36.0
 	gopkg.in/h2non/gock.v1 v1.1.2
 )
 
@@ -90,7 +89,7 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
