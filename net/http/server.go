@@ -2,7 +2,9 @@ package http
 
 import (
 	"context"
+	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/kkrt-labs/go-utils/log"
@@ -51,6 +53,9 @@ type Server struct {
 	Entrypoint *kkrtnet.Entrypoint
 	Server     *http.Server
 
+	mux sync.Mutex
+	l   net.Listener
+
 	done   chan struct{}
 	srvErr error
 }
@@ -60,12 +65,26 @@ func (s *Server) logger(ctx context.Context) *zap.Logger {
 	return log.LoggerFromContext(ctx)
 }
 
+func (s *Server) Addr() string {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
+	if s.l == nil {
+		return ""
+	}
+	return s.l.Addr().String()
+}
+
 func (s *Server) Start(ctx context.Context) error {
 	// Open connection and return possibly error
 	l, err := s.Entrypoint.Listen(ctx)
 	if err != nil {
 		return err
 	}
+
+	s.mux.Lock()
+	s.l = l
+	s.mux.Unlock()
 
 	s.logger(ctx).Info("Start serving incoming HTTP requests")
 	s.done = make(chan struct{})
