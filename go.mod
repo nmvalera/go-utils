@@ -1,8 +1,6 @@
 module github.com/kkrt-labs/go-utils
 
-go 1.22.0
-
-toolchain go1.22.9
+go 1.24.1
 
 require (
 	github.com/Azure/go-autorest/autorest v0.11.30
