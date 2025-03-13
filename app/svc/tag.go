@@ -8,7 +8,7 @@ import (
 )
 
 type Tagged struct {
-	sync.RWMutex
+	mux sync.RWMutex
 	tag.Set
 }
 
@@ -17,13 +17,13 @@ func NewTagged(tags ...*tag.Tag) *Tagged {
 }
 
 func (t *Tagged) WithTags(tags ...*tag.Tag) {
-	t.Lock()
+	t.mux.Lock()
 	t.Set = t.Set.WithTags(tags...)
-	t.Unlock()
+	t.mux.Unlock()
 }
 
 func (t *Tagged) Context(ctx context.Context, tags ...*tag.Tag) context.Context {
-	t.RLock()
-	defer t.RUnlock()
+	t.mux.RLock()
+	defer t.mux.RUnlock()
 	return tag.WithTags(ctx, append(t.Set, tags...)...)
 }

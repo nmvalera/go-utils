@@ -445,9 +445,7 @@ func TestMetrics(t *testing.T) {
 		return metrics, nil
 	})
 
-	t.Logf("app: %+v", app)
-	ctx := context.WithValue(context.Background(), "test", "test")
-	err := app.Start(ctx)
+	err := app.Start(context.Background())
 	require.NoError(t, err)
 
 	require.NotNil(t, app.healthz)

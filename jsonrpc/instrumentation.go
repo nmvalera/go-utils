@@ -77,7 +77,7 @@ func WithMetrics(client Client) Client {
 	}
 }
 
-func (m *metricable) SetMetrics(system, subsystem string, tags ...*tag.Tag) {
+func (m *metricable) SetMetrics(system, subsystem string, _ ...*tag.Tag) {
 	m.duration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: system,
 		Subsystem: subsystem,

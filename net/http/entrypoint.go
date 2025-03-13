@@ -84,7 +84,7 @@ func NewEntrypoint(addr string, opts ...EntrypointOption) (*Entrypoint, error) {
 
 	baseCtxFunc := ep.server.BaseContext
 	if baseCtxFunc == nil {
-		ep.server.BaseContext = func(l net.Listener) context.Context {
+		ep.server.BaseContext = func(_ net.Listener) context.Context {
 			return ep.context(context.Background())
 		}
 	} else {
@@ -208,7 +208,7 @@ func (ep *Entrypoint) logger(ctx context.Context) *zap.Logger {
 }
 
 // Ready returns the error from Serve(...) if it's not nil.
-func (ep *Entrypoint) Ready(ctx context.Context) error {
+func (ep *Entrypoint) Ready(_ context.Context) error {
 	return ep.srvErr
 }
 
