@@ -35,7 +35,7 @@ func testCallStatusOKAndValidResult(t *testing.T, c *Client, mockCli *httptestut
 		Reply(200).
 		JSON([]byte(`{"jsonrpc":"2.0","result":"abc","id":0}`))
 
-	mockCli.EXPECT().Gock(req)
+	mockCli.EXPECT().DoGock(req)
 
 	var res string
 	err := c.Call(
@@ -64,7 +64,7 @@ func testCallStatusOKAndError(t *testing.T, c *Client, mockCli *httptestutils.Mo
 		Reply(200).
 		JSON([]byte(`{"jsonrpc":"2.0","error":{"code":-32000,"message":"invalid test method"},"id":0}`))
 
-	mockCli.EXPECT().Gock(req)
+	mockCli.EXPECT().DoGock(req)
 
 	var res string
 	err := c.Call(
@@ -95,7 +95,7 @@ func testCallStatus400(t *testing.T, c *Client, mockCli *httptestutils.MockSende
 	req.Post("/").
 		Reply(400)
 
-	mockCli.EXPECT().Gock(req)
+	mockCli.EXPECT().DoGock(req)
 
 	var res string
 	err := c.Call(
