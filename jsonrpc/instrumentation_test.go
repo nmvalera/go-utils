@@ -3,8 +3,6 @@ package jsonrpc_test
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/kkrt-labs/go-utils/app/svc"
@@ -38,30 +36,14 @@ func TestWithTags(t *testing.T) {
 	res := "test"
 
 	validateCtx := func(ctx context.Context) error {
-		tags := tag.FromContext(ctx)
-		if len(tags) != 5 {
-			return errors.New("context does not contain 5 tags")
-		}
-
-		tagErrors := make([]string, 0)
-		expectedTags := []*tag.Tag{
+		return tag.ExpectTagsOnContext(
+			ctx,
 			tag.Key("test-key").String("test-value"),
 			tag.Key("req.method").String("test-method"),
 			tag.Key("req.version").String("2.0"),
 			tag.Key("req.params").Object([]interface{}{"test-param"}),
 			tag.Key("req.id").Object("test-id"),
-		}
-		for i, tag := range tags {
-			if tag.Key != expectedTags[i].Key || tag.Value.String() != expectedTags[i].Value.String() {
-				tagErrors = append(tagErrors, fmt.Sprintf("tag %v does not match: %v", tag, expectedTags[i]))
-			}
-		}
-
-		if len(tagErrors) > 0 {
-			return errors.New(strings.Join(tagErrors, "\n"))
-		}
-
-		return nil
+		)
 	}
 
 	mockCli.EXPECT().Call(kkrtgomock.ContextMatcher(validateCtx), req, res).Return(nil)
