@@ -44,6 +44,48 @@ Controls whether to include the caller (file and line) in log entries.
 - Values: `true`, `false`
 - Default: `false`
 
+### Output Configuration
+
+#### Output Paths
+
+Controls where logs are written.
+
+- Flag: `--log-output-paths`
+- Environment: `LOG_OUTPUT_PATHS`
+- Values: Array of paths (e.g., `stdout`, `stderr`, `/var/log/app.log`)
+- Default: `stderr`
+
+#### Error Output Paths
+
+Controls where error logs are written.
+
+- Flag: `--log-error-output-paths`
+- Environment: `LOG_ERROR_OUTPUT_PATHS`
+- Values: Array of paths (e.g., `stdout`, `stderr`, `/var/log/app.error.log`)
+- Default: `stderr`
+
+### Sampling Configuration
+
+Controls log sampling to prevent overwhelming output in high-throughput scenarios.
+
+#### Initial Sample
+
+Number of entries with the same message and level to process before sampling begins.
+
+- Flag: `--log-sampling-initial`
+- Environment: `LOG_SAMPLING_INITIAL`
+- Values: Any positive integer
+- Default: `100`
+
+#### Thereafter Sample
+
+After initial sample, log every Nth message.
+
+- Flag: `--log-sampling-thereafter`
+- Environment: `LOG_SAMPLING_THEREAFTER`
+- Values: Any positive integer
+- Default: `100`
+
 ## Advanced Configuration
 
 ### Key Names
@@ -172,36 +214,6 @@ Controls the separator used in console output format.
 - Environment: `LOG_ENCODER_CONSOLE_SEPARATOR`
 - Default: `\t` (tab)
 
-#### Sampling
-
-Controls the sampling rate for the logs.
-
-- Initial
-  - Flag: `--log-sampling-initial`
-  - Environment: `LOG_SAMPLING_INITIAL`
-  - Default: `100`
-
-- Thereafter
-  - Flag: `--log-sampling-thereafter`
-  - Environment: `LOG_SAMPLING_THEREAFTER`
-  - Default: `100`
-
-#### Output Paths
-
-Controls the output paths for the logs.
-
-- Flag: `--log-output-paths`
-- Environment: `LOG_OUTPUT_PATHS`
-- Default: `stderr`
-
-#### Error Output Paths
-
-Controls the error output paths for the logs.
-
-- Flag: `--log-error-output-paths`
-- Environment: `LOG_ERROR_OUTPUT_PATHS`
-- Default: `stderr`
-
 ## Example Usage
 
 Using flags:
@@ -225,6 +237,9 @@ Advanced configuration example:
   --log-encoder-time-encoder rfc3339nano \
   --log-encoder-level-encoder capitalColor \
   --log-encoder-caller-encoder full \
-  --log-encoder-console-separator "  "
+  --log-encoder-console-separator "  " \
+  --log-sampling-initial 100 \
+  --log-sampling-thereafter 100 \
+  --log-output-paths stdout,/var/log/app.log \
+  --log-error-output-paths stderr,/var/log/app.error.log
 ```
-

@@ -1,5 +1,7 @@
 package tag
 
+import "fmt"
+
 // Type describes the type of the Value holds.
 type Type int
 
@@ -22,6 +24,10 @@ const (
 type Value struct {
 	Type      Type
 	Interface interface{}
+}
+
+func (v *Value) String() string {
+	return fmt.Sprintf("%v", v.Interface)
 }
 
 // InvalidValue returns a Value with no value set.

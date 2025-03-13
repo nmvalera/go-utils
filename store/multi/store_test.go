@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	store "github.com/kkrt-labs/go-utils/store"
-	"github.com/kkrt-labs/go-utils/store/mocks"
+	"github.com/kkrt-labs/go-utils/store/mock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -34,8 +34,8 @@ func TestMultiStoreMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Create mock stores
-	mockStore1 := mocks.NewMockStore(ctrl)
-	mockStore2 := mocks.NewMockStore(ctrl)
+	mockStore1 := mock.NewMockStore(ctrl)
+	mockStore2 := mock.NewMockStore(ctrl)
 
 	// Create a multiStore with the mock stores
 	multiStore := New(mockStore1, mockStore2)

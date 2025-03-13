@@ -7,65 +7,38 @@ import (
 	"strings"
 )
 
-type ContentType int
-type ContentEncoding int
+// Store is an interface for storing and loading objects.
+//
+//go:generate mockgen -destination=./mock/store.go -package=mock github.com/kkrt-labs/go-utils/store Store
+type Store interface {
+	// Store stores an object in the store.
+	//
+	// The key is the identifier for the object.
+	// The reader is the object to store.
+	// The headers are optional metadata about the object.
+	Store(ctx context.Context, key string, reader io.Reader, headers *Headers) error
 
-const (
-	ContentTypeJSON ContentType = iota
-	ContentTypeProtobuf
-)
-
-var contentTypeStrings = [...]string{
-	"application/json",
-	"application/protobuf",
+	// Load loads an object from the store.
+	//
+	// The key is the identifier for the object.
+	// The headers are optional metadata about the object.
+	Load(ctx context.Context, key string, headers *Headers) (io.Reader, error)
 }
 
-func (ct ContentType) String() (string, error) {
-	if ct < 0 || int(ct) >= len(contentTypeStrings) {
-		return "", fmt.Errorf("invalid ContentType: %d", ct)
-	}
-	return contentTypeStrings[ct], nil
-}
-
-const (
-	ContentEncodingPlain ContentEncoding = iota
-	ContentEncodingGzip
-	ContentEncodingZlib
-	ContentEncodingFlate
-)
-
-var contentEncodingStrings = [...]string{
-	"",
-	"gzip",
-	"zlib",
-	"flate",
-}
-
-func (ce ContentEncoding) String() string {
-	if ce < 0 || int(ce) >= len(contentEncodingStrings) {
-		return "unknown"
-	}
-	return contentEncodingStrings[ce]
-}
-
+// Headers are optional metadata about an object to store/load
 type Headers struct {
-	ContentType     ContentType
-	ContentEncoding ContentEncoding
-	KeyValue        map[string]string
-}
+	// ContentType is the type of the object
+	ContentType ContentType
 
-func (h *Headers) String() (contentType string, contentEncoding ContentEncoding) {
-	contentType, _ = h.GetContentType()
-	contentEncoding, _ = h.GetContentEncoding()
-	return
+	// ContentEncoding is the compression algorithm used to store the object.
+	ContentEncoding ContentEncoding
+
+	// KeyValue is a map of key-value pairs to store/load with the object.
+	KeyValue map[string]string
 }
 
 func (h *Headers) GetContentType() (string, error) {
-	contentTypeStr, err := h.ContentType.String()
-	if err != nil {
-		return "", fmt.Errorf("invalid format: %v", err)
-	}
-	return strings.TrimPrefix(contentTypeStr, "application/"), nil
+	return strings.TrimPrefix(h.ContentType.String(), "application/"), nil
 }
 func (h *Headers) GetContentEncoding() (ContentEncoding, error) {
 	switch h.ContentEncoding {
@@ -81,32 +54,72 @@ func (h *Headers) GetContentEncoding() (ContentEncoding, error) {
 	return -1, fmt.Errorf("invalid compression: %s", h.ContentEncoding)
 }
 
-func ParseContentType(format string) (ContentType, error) {
-	switch format {
-	case "json":
-		return ContentTypeJSON, nil
-	case "protobuf":
-		return ContentTypeProtobuf, nil
+var unknown = "unknown"
+
+type ContentType int
+
+const (
+	ContentTypeJSON ContentType = iota
+	ContentTypeProtobuf
+)
+
+var contentTypeStrings = [...]string{
+	"application/json",
+	"application/protobuf",
+}
+
+func (ct ContentType) String() string {
+	if ct < 0 || int(ct) >= len(contentTypeStrings) {
+		return unknown
 	}
-	return -1, fmt.Errorf("invalid format: %s", format)
+	return contentTypeStrings[ct]
+}
+
+var contentTypes = map[string]ContentType{
+	contentTypeStrings[ContentTypeJSON]:     ContentTypeJSON,
+	contentTypeStrings[ContentTypeProtobuf]: ContentTypeProtobuf,
+}
+
+func ParseContentType(contentType string) (ContentType, error) {
+	if ct, ok := contentTypes[contentType]; ok {
+		return ct, nil
+	}
+	return -1, fmt.Errorf("invalid content type: %s", contentType)
+}
+
+type ContentEncoding int
+
+const (
+	ContentEncodingPlain ContentEncoding = iota
+	ContentEncodingGzip
+	ContentEncodingZlib
+	ContentEncodingFlate
+)
+
+var contentEncodingStrings = [...]string{
+	"plain",
+	"gzip",
+	"zlib",
+	"flate",
+}
+
+var contentEncodings = map[string]ContentEncoding{
+	contentEncodingStrings[ContentEncodingPlain]: ContentEncodingPlain,
+	contentEncodingStrings[ContentEncodingGzip]:  ContentEncodingGzip,
+	contentEncodingStrings[ContentEncodingZlib]:  ContentEncodingZlib,
+	contentEncodingStrings[ContentEncodingFlate]: ContentEncodingFlate,
+}
+
+func (ce ContentEncoding) String() string {
+	if ce < 0 || int(ce) >= len(contentEncodingStrings) {
+		return unknown
+	}
+	return contentEncodingStrings[ce]
 }
 
 func ParseContentEncoding(compression string) (ContentEncoding, error) {
-	switch compression {
-	case "gzip":
-		return ContentEncodingGzip, nil
-	case "zlib":
-		return ContentEncodingZlib, nil
-	case "flate":
-		return ContentEncodingFlate, nil
-	case "":
-		return ContentEncodingPlain, nil
-	default:
-		return -1, fmt.Errorf("invalid compression: %s", compression)
+	if ce, ok := contentEncodings[compression]; ok {
+		return ce, nil
 	}
-}
-
-type Store interface {
-	Store(ctx context.Context, key string, reader io.Reader, headers *Headers) error
-	Load(ctx context.Context, key string, headers *Headers) (io.Reader, error)
+	return -1, fmt.Errorf("invalid compression: %s", compression)
 }

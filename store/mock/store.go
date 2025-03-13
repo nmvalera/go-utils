@@ -2,7 +2,7 @@
 // Source: pkg/store/store.go
 
 // Package mocks is a generated GoMock package.
-package mocks
+package mock
 
 import (
 	context "context"

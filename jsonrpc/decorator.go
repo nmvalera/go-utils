@@ -18,7 +18,7 @@ type ClientDecorator func(Client) Client
 // WithVersion automatically set JSON-RPC request version
 func WithVersion(v string) ClientDecorator {
 	return func(c Client) Client {
-		return ClientFunc(func(ctx context.Context, req *Request, res interface{}) error {
+		return ClientFunc(func(ctx context.Context, req *Request, res any) error {
 			req.Version = v
 			return c.Call(ctx, req, res)
 		})
@@ -29,7 +29,7 @@ func WithVersion(v string) ClientDecorator {
 func WithIncrementalID() ClientDecorator {
 	var idCounter uint32
 	return func(c Client) Client {
-		return ClientFunc(func(ctx context.Context, req *Request, res interface{}) error {
+		return ClientFunc(func(ctx context.Context, req *Request, res any) error {
 			req.ID = atomic.AddUint32(&idCounter, 1) - 1
 			return c.Call(ctx, req, res)
 		})
@@ -39,7 +39,7 @@ func WithIncrementalID() ClientDecorator {
 // WithRetry automatically retries JSON-RPC calls
 func WithRetry() ClientDecorator {
 	pool := &sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return backoff.NewExponentialBackOff(
 				backoff.WithInitialInterval(50*time.Millisecond),
 				backoff.WithMaxElapsedTime(2*time.Second),
@@ -47,7 +47,7 @@ func WithRetry() ClientDecorator {
 		},
 	}
 	return func(c Client) Client {
-		return ClientFunc(func(ctx context.Context, req *Request, res interface{}) error {
+		return ClientFunc(func(ctx context.Context, req *Request, res any) error {
 			bckff := pool.Get().(*backoff.ExponentialBackOff)
 			defer func() {
 				bckff.Reset()
@@ -84,7 +84,7 @@ func WithRetry() ClientDecorator {
 // WithTimeout automatically sets a timeout for JSON-RPC calls
 func WithTimeout(d time.Duration) ClientDecorator {
 	return func(c Client) Client {
-		return ClientFunc(func(ctx context.Context, req *Request, res interface{}) error {
+		return ClientFunc(func(ctx context.Context, req *Request, res any) error {
 			ctx, cancel := context.WithTimeout(ctx, d)
 			defer cancel()
 
