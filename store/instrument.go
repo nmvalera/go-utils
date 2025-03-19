@@ -26,7 +26,7 @@ func (s *taggable) Store(ctx context.Context, key string, reader io.Reader, head
 	return s.store.Store(s.context(ctx, key, headers), key, reader, headers)
 }
 
-func (s *taggable) Load(ctx context.Context, key string, headers *Headers) (io.Reader, error) {
+func (s *taggable) Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error) {
 	return s.store.Load(s.context(ctx, key, headers), key, headers)
 }
 
@@ -122,7 +122,7 @@ func (m *metrics) Store(ctx context.Context, key string, reader io.Reader, heade
 	return err
 }
 
-func (m *metrics) Load(ctx context.Context, key string, headers *Headers) (io.Reader, error) {
+func (m *metrics) Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error) {
 	start := time.Now()
 	reader, err := m.store.Load(ctx, key, headers)
 	duration := time.Since(start)
@@ -171,7 +171,7 @@ func (l *loggable) Store(ctx context.Context, key string, reader io.Reader, head
 	return err
 }
 
-func (l *loggable) Load(ctx context.Context, key string, headers *Headers) (io.Reader, error) {
+func (l *loggable) Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error) {
 	logger := log.LoggerFromContext(ctx)
 	logger.Debug("Load store object")
 	reader, err := l.store.Load(ctx, key, headers)

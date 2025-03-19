@@ -3,30 +3,14 @@ package multistore
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"testing"
 
-	store "github.com/kkrt-labs/go-utils/store"
 	"github.com/kkrt-labs/go-utils/store/mock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
-
-// Define test cases for all combinations of ContentType and ContentEncoding
-var testCases = []struct {
-	name            string
-	contentType     store.ContentType
-	contentEncoding store.ContentEncoding
-}{
-	{"JSONPlain", store.ContentTypeJSON, store.ContentEncodingPlain},
-	{"JSONGzip", store.ContentTypeJSON, store.ContentEncodingGzip},
-	{"JSONZlib", store.ContentTypeJSON, store.ContentEncodingZlib},
-	{"JSONFlate", store.ContentTypeJSON, store.ContentEncodingFlate},
-	{"ProtobufPlain", store.ContentTypeProtobuf, store.ContentEncodingPlain},
-	{"ProtobufGzip", store.ContentTypeProtobuf, store.ContentEncodingGzip},
-	{"ProtobufZlib", store.ContentTypeProtobuf, store.ContentEncodingZlib},
-	{"ProtobufFlate", store.ContentTypeProtobuf, store.ContentEncodingFlate},
-}
 
 // use mock store to test
 func TestMultiStoreMock(t *testing.T) {
@@ -40,31 +24,33 @@ func TestMultiStoreMock(t *testing.T) {
 	// Create a multiStore with the mock stores
 	multiStore := New(mockStore1, mockStore2)
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			headers := &store.Headers{
-				ContentType:     tc.contentType,
-				ContentEncoding: tc.contentEncoding,
-			}
+	// 1. Store
+	ctx := context.TODO()
+	mockStore1.EXPECT().Store(ctx, "test", gomock.Any(), gomock.Any()).Return(nil)
+	mockStore2.EXPECT().Store(ctx, "test", gomock.Any(), gomock.Any()).Return(nil)
 
-			// Set expectations for the Store method
-			mockStore1.EXPECT().Store(gomock.Any(), "test", gomock.Any(), headers).Return(nil)
-			mockStore2.EXPECT().Store(gomock.Any(), "test", gomock.Any(), headers).Return(nil)
+	err := multiStore.Store(ctx, "test", bytes.NewReader([]byte("test-store")), nil)
+	assert.NoError(t, err)
 
-			// Test the Store method
-			err := multiStore.Store(context.Background(), "test", bytes.NewReader([]byte("test")), headers)
-			assert.NoError(t, err)
+	// 2. Load
+	// 2.A mockStore1 returns no error
+	mockStore1.EXPECT().Load(ctx, "test", gomock.Any()).Return(io.NopCloser(bytes.NewReader([]byte("test-load"))), nil)
 
-			// Set expectations for the Load method
-			mockStore1.EXPECT().Load(gomock.Any(), "test", nil).Return(bytes.NewReader([]byte("test")), nil)
+	reader, err := multiStore.Load(context.TODO(), "test", nil)
+	assert.NoError(t, err)
 
-			// Test the Load method
-			reader, err := multiStore.Load(context.Background(), "test", nil)
-			assert.NoError(t, err)
+	body, err := io.ReadAll(reader)
+	assert.NoError(t, err)
+	assert.Equal(t, "test-load", string(body))
 
-			body, err := io.ReadAll(reader)
-			assert.NoError(t, err)
-			assert.Equal(t, "test", string(body))
-		})
-	}
+	// 2.B mockStore1 returns an error
+	mockStore1.EXPECT().Load(ctx, "test", gomock.Any()).Return(nil, errors.New("test-error"))
+	mockStore2.EXPECT().Load(ctx, "test", gomock.Any()).Return(io.NopCloser(bytes.NewReader([]byte("test-load-2"))), nil)
+
+	reader, err = multiStore.Load(context.TODO(), "test", nil)
+	assert.NoError(t, err)
+
+	body, err = io.ReadAll(reader)
+	assert.NoError(t, err)
+	assert.Equal(t, "test-load-2", string(body))
 }
