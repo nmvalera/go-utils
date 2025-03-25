@@ -36,14 +36,11 @@ func WithIncrementalID() ClientDecorator {
 	}
 }
 
-// WithRetry automatically retries JSON-RPC calls
-func WithRetry() ClientDecorator {
+// WithExponentialBackOffRetry automatically retries JSON-RPC calls
+func WithExponentialBackOffRetry(opts ...backoff.ExponentialBackOffOpts) ClientDecorator {
 	pool := &sync.Pool{
 		New: func() any {
-			return backoff.NewExponentialBackOff(
-				backoff.WithInitialInterval(50*time.Millisecond),
-				backoff.WithMaxElapsedTime(2*time.Second),
-			)
+			return backoff.NewExponentialBackOff(opts...)
 		},
 	}
 	return func(c Client) Client {
@@ -71,9 +68,9 @@ func WithRetry() ClientDecorator {
 						Params:  req.Params,
 						ID:      fmt.Sprintf("%s#%d", req.ID, attempt),
 					}
-					log.LoggerFromContext(ctx).Warn("Retrying in...",
+					log.LoggerFromContext(ctx).Warn(
+						fmt.Sprintf("Call failed, retrying in %s...", d),
 						zap.Error(err),
-						zap.Duration("duration", d),
 					)
 				},
 			)
