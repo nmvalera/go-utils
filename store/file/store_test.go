@@ -14,8 +14,7 @@ import (
 
 func TestFileStore(t *testing.T) {
 	dataDir := t.TempDir()
-	s, err := New(dataDir)
-	require.NoError(t, err)
+	s := New(dataDir)
 
 	tests := []struct {
 		desc    string
