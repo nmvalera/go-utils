@@ -92,12 +92,12 @@ func TestWithMetrics(t *testing.T) {
 
 	require.Len(t, descs, 6)
 
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_load_count\", help: \"The number of objects successfully loaded from the store\", constLabels: {}, variableLabels: []}", descs[0].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_store_count\", help: \"The number of objects successfully stored in the store\", constLabels: {}, variableLabels: []}", descs[1].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_load_err_count\", help: \"The number of objects that failed to load from the store\", constLabels: {}, variableLabels: []}", descs[2].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_store_err_count\", help: \"The number of objects that failed to store in the store\", constLabels: {}, variableLabels: []}", descs[3].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_load_duration_seconds\", help: \"The duration of the load method (in seconds)\", constLabels: {}, variableLabels: []}", descs[4].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_store_duration_seconds\", help: \"The duration of the store method (in seconds)\", constLabels: {}, variableLabels: []}", descs[5].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_load_count\", help: \"The number of objects successfully loaded from the store\", constLabels: {}, variableLabels: {}}", descs[0].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_store_count\", help: \"The number of objects successfully stored in the store\", constLabels: {}, variableLabels: {}}", descs[1].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_load_err_count\", help: \"The number of objects that failed to load from the store\", constLabels: {}, variableLabels: {}}", descs[2].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_store_err_count\", help: \"The number of objects that failed to store in the store\", constLabels: {}, variableLabels: {}}", descs[3].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_load_duration_seconds\", help: \"The duration of the load method (in seconds)\", constLabels: {}, variableLabels: {}}", descs[4].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_store_duration_seconds\", help: \"The duration of the store method (in seconds)\", constLabels: {}, variableLabels: {}}", descs[5].String())
 
 	chMetrics := make(chan prometheus.Metric)
 	go func() {
