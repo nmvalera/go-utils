@@ -15,13 +15,8 @@ type Store struct {
 	dataDir string
 }
 
-func New(dataDir string) (*Store, error) {
-	// Validate datadir is a valid path
-	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		return nil, fmt.Errorf("data directory does not exist: %s", dataDir)
-	}
-
-	return &Store{dataDir: dataDir}, nil
+func New(dataDir string) *Store {
+	return &Store{dataDir: dataDir}
 }
 
 // Store stores the data in the file
