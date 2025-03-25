@@ -36,14 +36,11 @@ func WithIncrementalID() ClientDecorator {
 	}
 }
 
-// WithRetry automatically retries JSON-RPC calls
-func WithRetry() ClientDecorator {
+// WithExponentialBackOffRetry automatically retries JSON-RPC calls
+func WithExponentialBackOffRetry(opts ...backoff.ExponentialBackOffOpts) ClientDecorator {
 	pool := &sync.Pool{
 		New: func() any {
-			return backoff.NewExponentialBackOff(
-				backoff.WithInitialInterval(50*time.Millisecond),
-				backoff.WithMaxElapsedTime(2*time.Second),
-			)
+			return backoff.NewExponentialBackOff(opts...)
 		},
 	}
 	return func(c Client) Client {
@@ -71,9 +68,9 @@ func WithRetry() ClientDecorator {
 						Params:  req.Params,
 						ID:      fmt.Sprintf("%s#%d", req.ID, attempt),
 					}
-					log.LoggerFromContext(ctx).Warn("Retrying in...",
+					log.LoggerFromContext(ctx).Warn(
+						fmt.Sprintf("Call failed, retrying in %s...", d),
 						zap.Error(err),
-						zap.Duration("duration", d),
 					)
 				},
 			)
@@ -85,10 +82,16 @@ func WithRetry() ClientDecorator {
 func WithTimeout(d time.Duration) ClientDecorator {
 	return func(c Client) Client {
 		return ClientFunc(func(ctx context.Context, req *Request, res any) error {
-			ctx, cancel := context.WithTimeout(ctx, d)
+			deadline := time.Now().Add(d)
+
+			cancelCtx, cancel := context.WithDeadline(ctx, deadline)
 			defer cancel()
 
-			return c.Call(ctx, req, res)
+			err := c.Call(cancelCtx, req, res)
+			if err != nil && time.Now().After(deadline) {
+				err = fmt.Errorf("jsonrpc: call timed out after %q: %w", d, err)
+			}
+			return err
 		})
 	}
 }
