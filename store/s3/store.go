@@ -1,72 +1,77 @@
-package s3store
+package s3
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io"
+	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	aws "github.com/kkrt-labs/go-utils/aws"
+	"github.com/kkrt-labs/go-utils/common"
 	"github.com/kkrt-labs/go-utils/store"
 )
 
-type s3Store struct {
+type Store struct {
 	client *s3.Client
-	cfg    Config
+
+	bucket    string
+	keyPrefix string
 }
 
-func New(cfg *Config) (store.Store, error) {
-	awsCfg, err := aws.LoadConfig(cfg.ProviderConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+type Options func(*Store) error
+
+func New(s3c *s3.Client, bucket string, opts ...Options) (store.Store, error) {
+	s := &Store{
+		client: s3c,
+		bucket: bucket,
 	}
 
-	client := s3.NewFromConfig(awsCfg)
-	return &s3Store{
-		client: client,
-		cfg:    *cfg,
-	}, nil
+	for _, opt := range opts {
+		if err := opt(s); err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
 }
 
-func (s *s3Store) Store(ctx context.Context, key string, reader io.Reader, headers *store.Headers) error {
-	content, err := io.ReadAll(reader)
-	if err != nil {
-		return fmt.Errorf("failed to read content: %w", err)
-	}
-
-	contentLength := int64(len(content))
-	key = s.path(key, headers)
+// Store stores the data in the S3 bucket
+func (s *Store) Store(ctx context.Context, key string, reader io.Reader, headers *store.Headers) error {
 	input := &s3.PutObjectInput{
-		Bucket:        &s.cfg.Bucket,
-		Key:           &key,
-		Body:          bytes.NewReader(content),
-		ContentLength: &contentLength,
-	}
-
-	// Set content encoding if present
-	if headers != nil && headers.ContentEncoding != store.ContentEncodingPlain {
-		encoding := headers.ContentEncoding.String()
-		input.ContentEncoding = &encoding
+		Bucket: &s.bucket,
+		Key:    common.Ptr(s.path(key)),
+		Body:   reader,
 	}
 
 	// Set metadata from headers
-	if headers != nil && headers.KeyValue != nil {
-		input.Metadata = headers.KeyValue
+	if headers != nil {
+		if headers.ContentEncoding != store.ContentEncodingPlain {
+			input.ContentEncoding = common.Ptr(headers.ContentEncoding.String())
+		}
+
+		if headers.ContentType != store.ContentTypeText {
+			input.ContentType = common.Ptr(headers.ContentType.String())
+		}
+
+		if headers.KeyValue != nil {
+			input.Metadata = headers.KeyValue
+		}
 	}
 
-	_, err = s.client.PutObject(ctx, input)
+	// Store the object
+	_, err := s.client.PutObject(ctx, input)
 	if err != nil {
-		return fmt.Errorf("failed to put object in S3: %w", err)
+		return err
 	}
+
 	return nil
 }
 
-func (s *s3Store) Load(ctx context.Context, key string, headers *store.Headers) (io.Reader, error) {
-	key = s.path(key, headers)
+// Load loads the data from the S3 bucket
+// It is the responsibility of the caller to close the returned reader
+func (s *Store) Load(ctx context.Context, key string, _ *store.Headers) (io.ReadCloser, error) {
 	output, err := s.client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &s.cfg.Bucket,
-		Key:    &key,
+		Bucket: &s.bucket,
+		Key:    common.Ptr(s.path(key)),
 	})
 	if err != nil {
 		return nil, err
@@ -75,6 +80,14 @@ func (s *s3Store) Load(ctx context.Context, key string, headers *store.Headers) 
 	return output.Body, nil
 }
 
-func (s *s3Store) path(key string, headers *store.Headers) string {
-	return s.cfg.KeyPrefix + "/" + headers.KeyValue["chainID"] + "/" + key
+func (s *Store) path(key string) string {
+	return filepath.Join(s.keyPrefix, key)
+}
+
+// WithKeyPrefix sets the key prefix for the store.
+func WithKeyPrefix(prefix string) Options {
+	return func(s *Store) error {
+		s.keyPrefix = prefix
+		return nil
+	}
 }

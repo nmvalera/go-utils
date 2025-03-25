@@ -22,7 +22,8 @@ type Store interface {
 	//
 	// The key is the identifier for the object.
 	// The headers are optional metadata about the object.
-	Load(ctx context.Context, key string, headers *Headers) (io.Reader, error)
+	// It is the responsibility of the caller to close the returned reader
+	Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error)
 }
 
 // Headers are optional metadata about an object to store/load
@@ -59,11 +60,15 @@ var unknown = "unknown"
 type ContentType int
 
 const (
-	ContentTypeJSON ContentType = iota
+	ContentTypeUnknown ContentType = iota
+	ContentTypeText
+	ContentTypeJSON
 	ContentTypeProtobuf
 )
 
 var contentTypeStrings = [...]string{
+	"",
+	"text/plain",
 	"application/json",
 	"application/protobuf",
 }

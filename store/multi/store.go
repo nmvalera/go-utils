@@ -2,40 +2,21 @@ package multistore
 
 import (
 	"context"
-	"fmt"
 	"io"
 
 	store "github.com/kkrt-labs/go-utils/store"
-	filestore "github.com/kkrt-labs/go-utils/store/file"
-	s3store "github.com/kkrt-labs/go-utils/store/s3"
+	"go.uber.org/multierr"
 )
 
 type Store struct {
 	stores []store.Store
 }
 
-func NewFromConfig(cfg Config) (store.Store, error) {
-	var stores []store.Store
-
-	if cfg.FileConfig != nil {
-		stores = append(stores, filestore.New(*cfg.FileConfig))
-	}
-
-	if cfg.S3Config != nil {
-		s3Store, err := s3store.New(cfg.S3Config)
-		if err != nil {
-			return nil, err
-		}
-		stores = append(stores, s3Store)
-	}
-
-	return &Store{stores: stores}, nil
-}
-
 func New(stores ...store.Store) store.Store {
 	return &Store{stores: stores}
 }
 
+// Store stores the data in all stores (if one store returns an error, it will continue to the next store)
 func (m *Store) Store(ctx context.Context, key string, reader io.Reader, headers *store.Headers) error {
 	for _, s := range m.stores {
 		if err := s.Store(ctx, key, reader, headers); err != nil {
@@ -45,16 +26,18 @@ func (m *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 	return nil
 }
 
-func (m *Store) Load(ctx context.Context, key string, headers *store.Headers) (io.Reader, error) {
+// Load loads the data from the first store that doesn't return an error
+// If all stores return an error, it returns all errors as a multierr error
+// It is the responsibility of the caller to close the returned reader
+func (m *Store) Load(ctx context.Context, key string, headers *store.Headers) (io.ReadCloser, error) {
 	// Try stores in order until we find the data or encounter an error
+	errors := make([]error, 0, len(m.stores))
 	for _, s := range m.stores {
 		reader, err := s.Load(ctx, key, headers)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load from store: %w", err)
-		}
-		if reader != nil {
+		if err == nil {
 			return reader, nil
 		}
+		errors = append(errors, err)
 	}
-	return nil, fmt.Errorf("key %s not found in any store", key)
+	return nil, multierr.Combine(errors...)
 }

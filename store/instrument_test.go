@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"io"
 	"strings"
 	"testing"
 
@@ -15,6 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
+
+func TestImplementsInterface(t *testing.T) {
+	assert.Implements(t, (*store.Store)(nil), store.WithTags(nil))
+	assert.Implements(t, (*store.Store)(nil), store.WithMetrics(nil))
+	assert.Implements(t, (*store.Store)(nil), store.WithLog(nil))
+}
 
 func TestWithTags(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -61,7 +68,7 @@ func TestWithMetrics(t *testing.T) {
 	metricsStore.(svc.Metricable).SetMetrics("test-system", "test-subsystem")
 
 	ctx := context.TODO()
-	reader := strings.NewReader("test-value")
+	reader := io.NopCloser(strings.NewReader("test-value"))
 	headers := new(store.Headers)
 	mockStore.EXPECT().Store(ctx, "test-key", reader, headers).Return(nil)
 	err := metricsStore.Store(ctx, "test-key", reader, headers)
@@ -116,7 +123,7 @@ func TestWithLog(t *testing.T) {
 	require.Implements(t, (*store.Store)(nil), logStore)
 
 	ctx := context.TODO()
-	reader := strings.NewReader("test-value")
+	reader := io.NopCloser(strings.NewReader("test-value"))
 	headers := new(store.Headers)
 
 	mockStore.EXPECT().Store(ctx, "test-key", reader, headers).Return(nil)
