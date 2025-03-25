@@ -85,10 +85,16 @@ func WithRetry() ClientDecorator {
 func WithTimeout(d time.Duration) ClientDecorator {
 	return func(c Client) Client {
 		return ClientFunc(func(ctx context.Context, req *Request, res any) error {
-			ctx, cancel := context.WithTimeout(ctx, d)
+			deadline := time.Now().Add(d)
+
+			cancelCtx, cancel := context.WithDeadline(ctx, deadline)
 			defer cancel()
 
-			return c.Call(ctx, req, res)
+			err := c.Call(cancelCtx, req, res)
+			if err != nil && time.Now().After(deadline) {
+				err = fmt.Errorf("jsonrpc: call timed out after %q: %w", d, err)
+			}
+			return err
 		})
 	}
 }
