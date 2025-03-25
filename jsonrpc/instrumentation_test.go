@@ -104,9 +104,9 @@ func TestWithMetrics(t *testing.T) {
 	}
 
 	require.Len(t, descs, 3)
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_request_duration_seconds\", help: \"The duration of requests in seconds (per method)\", constLabels: {}, variableLabels: [method]}", descs[0].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_requests_total\", help: \"The total number of requests (per method)\", constLabels: {}, variableLabels: [method]}", descs[1].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_requests_errors\", help: \"The number of requests that failed (per method)\", constLabels: {}, variableLabels: [method]}", descs[2].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_request_duration_seconds\", help: \"The duration of requests in seconds (per method)\", constLabels: {}, variableLabels: {method}}", descs[0].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_requests_total\", help: \"The total number of requests (per method)\", constLabels: {}, variableLabels: {method}}", descs[1].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_requests_errors\", help: \"The number of requests that failed (per method)\", constLabels: {}, variableLabels: {method}}", descs[2].String())
 
 	chMetrics := make(chan prometheus.Metric)
 	go func() {

@@ -54,8 +54,8 @@ func TestWithMetrics(t *testing.T) {
 	}
 
 	require.Len(t, descs, 2)
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_chain_id\", help: \"The chain ID of the network\", constLabels: {}, variableLabels: []}", descs[0].String())
-	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_chain_head\", help: \"The block number of the chain head\", constLabels: {}, variableLabels: []}", descs[1].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_chain_id\", help: \"The chain ID of the network\", constLabels: {}, variableLabels: {}}", descs[0].String())
+	assert.Equal(t, "Desc{fqName: \"test-system_test-subsystem_chain_head\", help: \"The block number of the chain head\", constLabels: {}, variableLabels: {}}", descs[1].String())
 
 	chMetrics := make(chan prometheus.Metric)
 	go func() {
