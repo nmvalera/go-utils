@@ -25,7 +25,7 @@ func TestAddFlags(t *testing.T) {
 	assert.Equal(t, "stacktrace", v.GetString("log.encoder.stacktrace-key"))
 	assert.Equal(t, false, v.GetBool("log.encoder.skip-line-ending"))
 	assert.Equal(t, "capitalColor", v.GetString("log.encoder.level-encoder"))
-	assert.Equal(t, "time", v.GetString("log.encoder.time-encoder"))
+	assert.Equal(t, "rfc3339", v.GetString("log.encoder.time-encoder"))
 	assert.Equal(t, "s", v.GetString("log.encoder.duration-encoder"))
 	assert.Equal(t, "short", v.GetString("log.encoder.caller-encoder"))
 	assert.Equal(t, "full", v.GetString("log.encoder.name-encoder"))

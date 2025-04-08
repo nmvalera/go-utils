@@ -53,3 +53,28 @@ func TestVal(t *testing.T) {
 		assert.Equal(t, true, res)
 	})
 }
+
+func TestPtrSlice(t *testing.T) {
+	t.Run("NonEmpty", func(t *testing.T) {
+		res := PtrSlice("test", "test2")
+		assert.Len(t, *res, 2)
+		assert.Equal(t, "test", *(*res)[0])
+		assert.Equal(t, "test2", *(*res)[1])
+	})
+
+	t.Run("Empty", func(t *testing.T) {
+		res := PtrSlice[string]()
+		assert.Equal(t, []*string{}, *res)
+	})
+}
+
+func TestValSlice(t *testing.T) {
+	t.Run("NonEmpty", func(t *testing.T) {
+		res := ValSlice(Ptr("test"), Ptr("test2"))
+		assert.Equal(t, []string{"test", "test2"}, res)
+	})
+	t.Run("Empty", func(t *testing.T) {
+		res := ValSlice[string]()
+		assert.Equal(t, []string{}, res)
+	})
+}
