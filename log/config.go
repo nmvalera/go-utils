@@ -2,13 +2,208 @@ package log
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
+	"github.com/kkrt-labs/go-utils/common"
+	"github.com/kkrt-labs/go-utils/config"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
+func init() {
+	// Register decode hooks for the Config types declared in this file.
+	// We do not need to register encoders because default config.StringerEncodeHook works for all types in this file.
+	config.RegisterGlobalDecodeHooks(
+		func(f reflect.Type, t reflect.Type, data any) (any, error) {
+			// Parse Format
+			if f.Kind() != reflect.String {
+				return data, nil
+			}
+
+			if t == reflect.TypeOf(Format(0)) {
+				return ParseFormat(data.(string))
+			}
+
+			// Parse Level
+			if t == reflect.TypeOf(Level(0)) {
+				return ParseLevel(data.(string))
+			}
+
+			// Parse LevelEncoder
+			if t == reflect.TypeOf(LevelEncoder(0)) {
+				return ParseLevelEncoder(data.(string))
+			}
+
+			// Parse TimeEncoder
+			if t == reflect.TypeOf(TimeEncoder(0)) {
+				return ParseTimeEncoder(data.(string))
+			}
+
+			// Parse DurationEncoder
+			if t == reflect.TypeOf(DurationEncoder(0)) {
+				return ParseDurationEncoder(data.(string))
+			}
+
+			// Parse CallerEncoder
+			if t == reflect.TypeOf(CallerEncoder(0)) {
+				return ParseCallerEncoder(data.(string))
+			}
+
+			// Parse NameEncoder
+			if t == reflect.TypeOf(NameEncoder(0)) {
+				return ParseNameEncoder(data.(string))
+			}
+
+			return data, nil
+		},
+	)
+}
+
+// DefaultConfig returns a default Config.
+func DefaultConfig() *Config {
+	return &Config{
+		Level:            common.Ptr(InfoLevel),
+		Format:           common.Ptr(TextFormat),
+		EnableStacktrace: common.Ptr(false),
+		EnableCaller:     common.Ptr(false),
+		Encoder: &EncoderConfig{
+			MessageKey:       common.Ptr("msg"),
+			LevelKey:         common.Ptr("level"),
+			TimeKey:          common.Ptr("ts"),
+			NameKey:          common.Ptr("logger"),
+			CallerKey:        common.Ptr("caller"),
+			FunctionKey:      common.Ptr(""),
+			StacktraceKey:    common.Ptr("stacktrace"),
+			SkipLineEnding:   common.Ptr(false),
+			LineEnding:       common.Ptr(zapcore.DefaultLineEnding),
+			LevelEncoder:     common.Ptr(LevelEncoderCapitalColor),
+			TimeEncoder:      common.Ptr(TimeEncoderRFC3339),
+			DurationEncoder:  common.Ptr(DurationEncoderSeconds),
+			CallerEncoder:    common.Ptr(CallerEncoderShort),
+			NameEncoder:      common.Ptr(NameEncoderFull),
+			ConsoleSeparator: common.Ptr("\t"),
+		},
+		Sampling: &SamplingConfig{
+			Initial:    common.Ptr(100),
+			Thereafter: common.Ptr(100),
+		},
+		OutputPaths:      common.PtrSlice("stderr"),
+		ErrorOutputPaths: common.PtrSlice("stderr"),
+	}
+
+}
+
+// Config is the configuration to create a zap.Config.
+type Config struct {
+	Format           *Format         `key:"format,omitempty" desc:"Log format"`
+	Level            *Level          `key:"level,omitempty" desc:"Minimum enabled logging level"`
+	EnableStacktrace *bool           `key:"enable-stacktrace,omitempty" env:"ENABLE_STACKTRACE" flag:"enable-stacktrace" desc:"Enable automatic stacktrace capturing"`
+	EnableCaller     *bool           `key:"enable-caller,omitempty" env:"ENABLE_CALLER" flag:"enable-caller" desc:"Enable caller"`
+	Encoder          *EncoderConfig  `key:"encoding,omitempty" flag:"encoding" env:"ENCODING" desc:"Encoding: "`
+	Sampling         *SamplingConfig `key:"sampling,omitempty" desc:"Sampling: "`
+	OutputPaths      *[]*string      `key:"output-paths,omitempty" env:"OUTPUT_PATHS" flag:"output" desc:"List of URLs or file paths to write logging output to"`
+	ErrorOutputPaths *[]*string      `key:"error-output-paths,omitempty" env:"ERROR_OUTPUT_PATHS" flag:"err-output" desc:"List of URLs to write internal logger errors to"`
+}
+
+func (cfg *Config) ZapConfig() *zap.Config {
+	return &zap.Config{
+		DisableStacktrace: !common.Val(cfg.EnableStacktrace),
+		DisableCaller:     !common.Val(cfg.EnableCaller),
+		Level:             zap.NewAtomicLevelAt(zapLevels[*cfg.Level]),
+		Sampling: &zap.SamplingConfig{
+			Initial:    common.Val(cfg.Sampling.Initial),
+			Thereafter: common.Val(cfg.Sampling.Thereafter),
+		},
+		Encoding:         zapFormats[*cfg.Format],
+		EncoderConfig:    *cfg.Encoder.EncoderConfig(),
+		OutputPaths:      common.ValSlice(common.Val(cfg.OutputPaths)...),
+		ErrorOutputPaths: common.ValSlice(common.Val(cfg.ErrorOutputPaths)...),
+	}
+}
+
+type embedConfig struct {
+	Log *Config `key:"log"`
+}
+
+// Env returns the environment variables for the given Config.
+// All environment variables are prefixed with "LOG_".
+func (cfg *Config) Env() (map[string]string, error) {
+	return config.Env(&embedConfig{cfg}, nil)
+}
+
+// Unmarshal unmarshals the given viper into the Config.
+// Assumes
+// - all viper keys are prefixed with "log."
+// - all environment variables are prefixed with "LOG_".
+func (cfg *Config) Unmarshal(v *viper.Viper) error {
+	return config.Unmarshal(&embedConfig{cfg}, v)
+}
+
+// AddFlags adds flags to the given viper and pflag.FlagSet.
+// Sets
+// - all viper keys with "log." prefix
+// - all environment variables with "LOG_" prefix
+// - all flags with "log-" prefix
+func AddFlags(v *viper.Viper, f *pflag.FlagSet) error {
+	return config.AddFlags(&embedConfig{DefaultConfig()}, v, f, nil)
+}
+
+type EncoderConfig struct {
+	MessageKey       *string          `key:"message-key,omitempty" env:"MESSAGE_KEY" flag:"message-key" desc:"Key for the log message (if empty, the message is omitted)"`
+	LevelKey         *string          `key:"level-key,omitempty" env:"LEVEL_KEY" flag:"level-key" desc:"Key for the log level (if empty, the level is omitted)"`
+	TimeKey          *string          `key:"time-key,omitempty" env:"TIME_KEY" flag:"time-key" desc:"Key for the log timestamp (if empty, the timestamp is omitted)"`
+	NameKey          *string          `key:"name-key,omitempty" env:"NAME_KEY" flag:"name-key" desc:"Key for the log logger name (if empty, the logger name is omitted)"`
+	CallerKey        *string          `key:"caller-key,omitempty" env:"CALLER_KEY" flag:"caller-key" desc:"Key for the log caller (if empty, the caller is omitted)"`
+	FunctionKey      *string          `key:"function-key,omitempty" env:"FUNCTION_KEY" flag:"function-key" desc:"Key for the log function (if empty, the function is omitted)"`
+	StacktraceKey    *string          `key:"stacktrace-key,omitempty" env:"STACKTRACE_KEY" flag:"stacktrace-key" desc:"Key for the log stacktrace (if empty, the stacktrace is omitted)"`
+	SkipLineEnding   *bool            `key:"skip-line-ending,omitempty" env:"SKIP_LINE_ENDING" flag:"skip-line-ending" desc:"Skip the line ending"`
+	LineEnding       *string          `key:"line-ending,omitempty" env:"LINE_ENDING" flag:"line-ending" desc:"Line ending"`
+	LevelEncoder     *LevelEncoder    `key:"level-encoder,omitempty" env:"LEVEL_ENCODER" flag:"level-encoder" desc:"Primitive representation for the log level (e.g. 'capital', 'color', 'capitalColor', 'lowercase')"`
+	TimeEncoder      *TimeEncoder     `key:"time-encoder,omitempty" env:"TIME_ENCODER" flag:"time-encoder" desc:"Primitive representation for the log timestamp (e.g. 'rfc3339nano', 'rfc3339', 'iso8601', 'millis', 'nanos', 'time')"`
+	DurationEncoder  *DurationEncoder `key:"duration-encoder,omitempty" env:"DURATION_ENCODER" flag:"duration-encoder" desc:"Primitive representation for the log duration (e.g. 'string', 'nanos', 'ms', 's')"`
+	CallerEncoder    *CallerEncoder   `key:"caller-encoder,omitempty" env:"CALLER_ENCODER" flag:"caller-encoder" desc:"Primitive representation for the log caller (e.g. 'full', 'short')"`
+	NameEncoder      *NameEncoder     `key:"name-encoder,omitempty" env:"NAME_ENCODER" flag:"name-encoder" desc:"Primitive representation for the log logger name (e.g. 'full', 'short')"`
+	ConsoleSeparator *string          `key:"console-separator,omitempty" env:"CONSOLE_SEPARATOR" flag:"console-separator" desc:"Field separator used by the console encoder"`
+}
+
+func (cfg *EncoderConfig) EncoderConfig() *zapcore.EncoderConfig {
+	return &zapcore.EncoderConfig{
+		MessageKey:       common.Val(cfg.MessageKey),
+		LevelKey:         common.Val(cfg.LevelKey),
+		TimeKey:          common.Val(cfg.TimeKey),
+		NameKey:          common.Val(cfg.NameKey),
+		CallerKey:        common.Val(cfg.CallerKey),
+		FunctionKey:      common.Val(cfg.FunctionKey),
+		StacktraceKey:    common.Val(cfg.StacktraceKey),
+		SkipLineEnding:   common.Val(cfg.SkipLineEnding),
+		LineEnding:       common.Val(cfg.LineEnding),
+		ConsoleSeparator: common.Val(cfg.ConsoleSeparator),
+		EncodeLevel:      zapLevelEncoders[common.Val(cfg.LevelEncoder)],
+		EncodeTime:       zapTimeEncoders[common.Val(cfg.TimeEncoder)],
+		EncodeDuration:   zapDurationEncoders[common.Val(cfg.DurationEncoder)],
+		EncodeCaller:     zapCallerEncoders[common.Val(cfg.CallerEncoder)],
+		EncodeName:       zapNameEncoders[common.Val(cfg.NameEncoder)],
+	}
+}
+
+type SamplingConfig struct {
+	Initial    *int `key:"initial,omitempty" desc:"Number of log entries with the same level and message to log before dropping entries"`
+	Thereafter *int `key:"thereafter,omitempty" desc:"After the initial number of entries, every Mth entry is logged and the rest are dropped"`
+}
+
+var unknown = "unknown"
+
 type Level int
+
+func (l Level) String() string {
+	if l >= 0 && l < Level(len(levelsStr)) {
+		return levelsStr[l]
+	}
+	return unknown
+}
 
 const (
 	DebugLevel Level = iota
@@ -47,6 +242,13 @@ var zapLevels = map[Level]zapcore.Level{
 
 type Format int
 
+func (f Format) String() string {
+	if f >= 0 && f < Format(len(formatsStr)) {
+		return formatsStr[f]
+	}
+	return unknown
+}
+
 const (
 	TextFormat Format = iota
 	JSONFormat
@@ -75,6 +277,13 @@ var zapFormats = map[Format]string{
 }
 
 type LevelEncoder int
+
+func (l LevelEncoder) String() string {
+	if l >= 0 && l < LevelEncoder(len(levelEncodersStr)) {
+		return levelEncodersStr[l]
+	}
+	return unknown
+}
 
 const (
 	LevelEncoderCapital LevelEncoder = iota
@@ -112,6 +321,13 @@ var zapLevelEncoders = map[LevelEncoder]zapcore.LevelEncoder{
 }
 
 type TimeEncoder int
+
+func (t TimeEncoder) String() string {
+	if t >= 0 && t < TimeEncoder(len(timeEncodersStr)) {
+		return timeEncodersStr[t]
+	}
+	return unknown
+}
 
 const (
 	TimeEncoderRFC3339Nano TimeEncoder = iota
@@ -158,6 +374,13 @@ var zapTimeEncoders = map[TimeEncoder]zapcore.TimeEncoder{
 
 type DurationEncoder int
 
+func (d DurationEncoder) String() string {
+	if d >= 0 && d < DurationEncoder(len(durationEncodersStr)) {
+		return durationEncodersStr[d]
+	}
+	return unknown
+}
+
 const (
 	DurationEncoderString DurationEncoder = iota
 	DurationEncoderNanos
@@ -195,6 +418,13 @@ var zapDurationEncoders = map[DurationEncoder]zapcore.DurationEncoder{
 
 type CallerEncoder int
 
+func (c CallerEncoder) String() string {
+	if c >= 0 && c < CallerEncoder(len(callerEncodersStr)) {
+		return callerEncodersStr[c]
+	}
+	return unknown
+}
+
 const (
 	CallerEncoderFull CallerEncoder = iota
 	CallerEncoderShort
@@ -224,6 +454,13 @@ var zapCallerEncoders = map[CallerEncoder]zapcore.CallerEncoder{
 
 type NameEncoder int
 
+func (n NameEncoder) String() string {
+	if n >= 0 && n < NameEncoder(len(nameEncodersStr)) {
+		return nameEncodersStr[n]
+	}
+	return unknown
+}
+
 const (
 	NameEncoderFull NameEncoder = iota
 	NameEncoderShort
@@ -246,161 +483,4 @@ func ParseNameEncoder(encoder string) (NameEncoder, error) {
 
 var zapNameEncoders = map[NameEncoder]zapcore.NameEncoder{
 	NameEncoderFull: zapcore.FullNameEncoder,
-}
-
-type EncoderConfig struct {
-	MessageKey       string `mapstructure:"message-key"`
-	LevelKey         string `mapstructure:"level-key"`
-	TimeKey          string `mapstructure:"time-key"`
-	NameKey          string `mapstructure:"name-key"`
-	CallerKey        string `mapstructure:"caller-key"`
-	FunctionKey      string `mapstructure:"function-key"`
-	StacktraceKey    string `mapstructure:"stacktrace-key"`
-	SkipLineEnding   bool   `mapstructure:"skip-line-ending"`
-	LineEnding       string `mapstructure:"line-ending"`
-	LevelEncoder     string `mapstructure:"level-encoder"`
-	TimeEncoder      string `mapstructure:"time-encoder"`
-	DurationEncoder  string `mapstructure:"duration-encoder"`
-	CallerEncoder    string `mapstructure:"caller-encoder"`
-	NameEncoder      string `mapstructure:"name-encoder"`
-	ConsoleSeparator string `mapstructure:"console-separator"`
-}
-
-func ParseEncoderConfig(cfg *EncoderConfig) (*zapcore.EncoderConfig, error) {
-	zapCfg := zapcore.EncoderConfig{
-		MessageKey:       cfg.MessageKey,
-		LevelKey:         cfg.LevelKey,
-		TimeKey:          cfg.TimeKey,
-		NameKey:          cfg.NameKey,
-		CallerKey:        cfg.CallerKey,
-		FunctionKey:      cfg.FunctionKey,
-		StacktraceKey:    cfg.StacktraceKey,
-		SkipLineEnding:   cfg.SkipLineEnding,
-		LineEnding:       cfg.LineEnding,
-		ConsoleSeparator: cfg.ConsoleSeparator,
-	}
-
-	// LevelEncoder
-	if cfg.LevelEncoder != "" {
-		levelEncoder, err := ParseLevelEncoder(cfg.LevelEncoder)
-		if err != nil {
-			return nil, err
-		}
-		zapCfg.EncodeLevel = zapLevelEncoders[levelEncoder]
-	}
-
-	// TimeEncoder
-	if cfg.TimeEncoder != "" {
-		timeEncoder, err := ParseTimeEncoder(cfg.TimeEncoder)
-		if err != nil {
-			return nil, err
-		}
-		zapCfg.EncodeTime = zapTimeEncoders[timeEncoder]
-	}
-
-	// DurationEncoder
-	if cfg.DurationEncoder != "" {
-		durationEncoder, err := ParseDurationEncoder(cfg.DurationEncoder)
-		if err != nil {
-			return nil, err
-		}
-		zapCfg.EncodeDuration = zapDurationEncoders[durationEncoder]
-	}
-
-	// CallerEncoder
-	if cfg.CallerEncoder != "" {
-		callerEncoder, err := ParseCallerEncoder(cfg.CallerEncoder)
-		if err != nil {
-			return nil, err
-		}
-		zapCfg.EncodeCaller = zapCallerEncoders[callerEncoder]
-	}
-
-	// NameEncoder
-	if cfg.NameEncoder != "" {
-		nameEncoder, err := ParseNameEncoder(cfg.NameEncoder)
-		if err != nil {
-			return nil, err
-		}
-		zapCfg.EncodeName = zapNameEncoders[nameEncoder]
-	}
-
-	return &zapCfg, nil
-}
-
-type SamplingConfig struct {
-	Initial    int `mapstructure:"initial"`
-	Thereafter int `mapstructure:"thereafter"`
-}
-
-// Config is the configuration for the logger.
-// It can be used in conjunction with viper.
-//
-// Example:
-//
-//	 import "github.com/kkrt-labs/go-utils/log"
-//
-//	 cfg := &log.Config{
-//			Log log.Config `mapstructure:"log"`
-//	 }
-//
-//	 viper.Set("log.format", "json")
-//	 viper.Set("log.level", "info")
-//	 viper.Set("log.enable-stacktrace", true)
-//	 viper.Set("log.enable-caller", true)
-//	 viper.Set("log.encoder.message-key", "msg")
-//
-//	 var cfg Config
-//	 err := viper.Unmarshal(&cfg)
-//	 if err != nil {
-//	 	fmt.Printf("Failed to unmarshal config: %v", err)
-//	 } else {
-//	 	fmt.Printf("Config: %+v", cfg)
-//	 }
-type Config struct {
-	Format           string         `mapstructure:"format"`
-	Level            string         `mapstructure:"level"`
-	EnableStacktrace bool           `mapstructure:"enable-stacktrace"`
-	EnableCaller     bool           `mapstructure:"enable-caller"`
-	Encoder          EncoderConfig  `mapstructure:"encoder"`
-	Sampling         SamplingConfig `mapstructure:"sampling"`
-	OutputPaths      []string       `mapstructure:"output-paths"`
-	ErrorOutputPaths []string       `mapstructure:"error-output-paths"`
-}
-
-func ParseConfig(cfg *Config) (*zap.Config, error) {
-	zapCfg := &zap.Config{
-		DisableStacktrace: !cfg.EnableStacktrace,
-		DisableCaller:     !cfg.EnableCaller,
-		Level:             zap.NewAtomicLevel(),
-		Sampling: &zap.SamplingConfig{
-			Initial:    cfg.Sampling.Initial,
-			Thereafter: cfg.Sampling.Thereafter,
-		},
-		OutputPaths:      cfg.OutputPaths,
-		ErrorOutputPaths: cfg.ErrorOutputPaths,
-	}
-
-	// Log Level
-	level, err := ParseLevel(cfg.Level)
-	if err != nil {
-		return nil, err
-	}
-	zapCfg.Level.SetLevel(zapLevels[level])
-
-	// Log Format
-	format, err := ParseFormat(cfg.Format)
-	if err != nil {
-		return nil, err
-	}
-	zapCfg.Encoding = zapFormats[format]
-
-	// Encoder Config
-	encoderCfg, err := ParseEncoderConfig(&cfg.Encoder)
-	if err != nil {
-		return nil, err
-	}
-	zapCfg.EncoderConfig = *encoderCfg
-
-	return zapCfg, nil
 }

@@ -1,4 +1,4 @@
-package spf13
+package config
 
 import (
 	"fmt"
@@ -22,25 +22,31 @@ type StringFlag struct {
 	Shorthand    string
 	Env          string
 	Description  string
-	DefaultValue *string
+	DefaultValue any
 }
 
 func (flag *StringFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
+	defaultValue, ok := flag.DefaultValue.(string)
+	if !ok {
+		ptr, ok := flag.DefaultValue.(*string)
+		if !ok {
+			panic("default value for flag is not a string")
+		}
+		defaultValue = common.Val(ptr)
+	}
+
 	if flag.Name != "" {
 		if flag.Shorthand != "" {
-			f.StringP(flag.Name, flag.Shorthand, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+			f.StringP(flag.Name, flag.Shorthand, defaultValue, FlagDesc(flag.Description, flag.Env))
 		} else {
-			f.String(flag.Name, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+			f.String(flag.Name, defaultValue, FlagDesc(flag.Description, flag.Env))
 		}
 		_ = v.BindPFlag(flag.ViperKey, f.Lookup(flag.Name))
 	}
 	if flag.Env != "" {
 		_ = v.BindEnv(flag.ViperKey, flag.Env)
 	}
-
-	if flag.DefaultValue != nil {
-		v.SetDefault(flag.ViperKey, *flag.DefaultValue)
-	}
+	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
 
 type StringArrayFlag struct {
@@ -49,24 +55,32 @@ type StringArrayFlag struct {
 	Shorthand    string
 	Env          string
 	Description  string
-	DefaultValue []string
+	DefaultValue any
 }
 
 func (flag *StringArrayFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
+	defaultValue, ok := flag.DefaultValue.([]string)
+	if !ok {
+		ptr, ok := flag.DefaultValue.(*[]string)
+		if !ok {
+			panic("default value for flag is not a []string")
+		}
+		defaultValue = common.Val(ptr)
+	}
+
 	if flag.Name != "" {
 		if flag.Shorthand != "" {
-			f.StringArrayP(flag.Name, flag.Shorthand, flag.DefaultValue, FlagDesc(flag.Description, flag.Env))
+			f.StringSliceP(flag.Name, flag.Shorthand, defaultValue, FlagDesc(flag.Description, flag.Env))
 		} else {
-			f.StringArray(flag.Name, flag.DefaultValue, FlagDesc(flag.Description, flag.Env))
+			f.StringSlice(flag.Name, defaultValue, FlagDesc(flag.Description, flag.Env))
 		}
 		_ = v.BindPFlag(flag.ViperKey, f.Lookup(flag.Name))
 	}
 	if flag.Env != "" {
 		_ = v.BindEnv(flag.ViperKey, flag.Env)
 	}
-	if len(flag.DefaultValue) > 0 {
-		v.SetDefault(flag.ViperKey, flag.DefaultValue)
-	}
+
+	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
 
 type BoolFlag struct {
@@ -75,21 +89,31 @@ type BoolFlag struct {
 	Shorthand    string
 	Env          string
 	Description  string
-	DefaultValue *bool
+	DefaultValue any
 }
 
 func (flag *BoolFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
+	defaultValue, ok := flag.DefaultValue.(bool)
+	if !ok {
+		ptr, ok := flag.DefaultValue.(*bool)
+		if !ok {
+			panic("default value for flag is not a bool")
+		}
+		defaultValue = common.Val(ptr)
+	}
+
 	if flag.Name != "" {
 		if flag.Shorthand != "" {
-			f.BoolP(flag.Name, flag.Shorthand, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+			f.BoolP(flag.Name, flag.Shorthand, defaultValue, FlagDesc(flag.Description, flag.Env))
 		} else {
-			f.Bool(flag.Name, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+			f.Bool(flag.Name, defaultValue, FlagDesc(flag.Description, flag.Env))
 		}
 		_ = v.BindPFlag(flag.ViperKey, f.Lookup(flag.Name))
 	}
 	if flag.Env != "" {
 		_ = v.BindEnv(flag.ViperKey, flag.Env)
 	}
+
 	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
 
@@ -107,20 +131,30 @@ type IntFlag struct {
 	Shorthand    string
 	Env          string
 	Description  string
-	DefaultValue *int
+	DefaultValue any
 }
 
 func (flag *IntFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
+	defaultValue, ok := flag.DefaultValue.(int)
+	if !ok {
+		ptr, ok := flag.DefaultValue.(*int)
+		if !ok {
+			panic("default value for flag is not an int")
+		}
+		defaultValue = common.Val(ptr)
+	}
+
 	if flag.Name != "" {
 		if flag.Shorthand != "" {
-			f.IntP(flag.Name, flag.Shorthand, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+			f.IntP(flag.Name, flag.Shorthand, defaultValue, FlagDesc(flag.Description, flag.Env))
 		} else {
-			f.Int(flag.Name, common.Val(flag.DefaultValue), FlagDesc(flag.Description, flag.Env))
+			f.Int(flag.Name, defaultValue, FlagDesc(flag.Description, flag.Env))
 		}
 		_ = v.BindPFlag(flag.ViperKey, f.Lookup(flag.Name))
 	}
 	if flag.Env != "" {
 		_ = v.BindEnv(flag.ViperKey, flag.Env)
 	}
+
 	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }

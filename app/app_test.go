@@ -9,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kkrt-labs/go-utils/common"
+	"github.com/kkrt-labs/go-utils/log"
+	kkrthttp "github.com/kkrt-labs/go-utils/net/http"
 	"github.com/kkrt-labs/go-utils/tag"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -17,18 +20,31 @@ import (
 )
 
 func newTestApp(t *testing.T) *App {
-	cfg := new(Config)
-	cfg.MainEntrypoint.Net.KeepAlive = "1s"
-	cfg.MainEntrypoint.HTTP.ReadTimeout = "1s"
-	cfg.MainEntrypoint.HTTP.ReadHeaderTimeout = "1s"
-	cfg.MainEntrypoint.HTTP.WriteTimeout = "1s"
-	cfg.MainEntrypoint.HTTP.IdleTimeout = "1s"
-	cfg.HealthzEntrypoint.Net.KeepAlive = "1s"
-	cfg.HealthzEntrypoint.HTTP.ReadTimeout = "1s"
-	cfg.HealthzEntrypoint.HTTP.ReadHeaderTimeout = "1s"
-	cfg.HealthzEntrypoint.HTTP.WriteTimeout = "1s"
-	cfg.HealthzEntrypoint.HTTP.IdleTimeout = "1s"
-
+	cfg := &Config{
+		MainEntrypoint: &kkrthttp.EntrypointConfig{
+			HTTP: &kkrthttp.ServerConfig{
+				ReadTimeout:       common.Ptr(time.Second),
+				ReadHeaderTimeout: common.Ptr(time.Second),
+				WriteTimeout:      common.Ptr(time.Second),
+				IdleTimeout:       common.Ptr(time.Second),
+			},
+			Net: &kkrthttp.ListenConfig{
+				KeepAlive: common.Ptr(time.Second),
+			},
+		},
+		HealthzEntrypoint: &kkrthttp.EntrypointConfig{
+			HTTP: &kkrthttp.ServerConfig{
+				ReadTimeout:       common.Ptr(time.Second),
+				ReadHeaderTimeout: common.Ptr(time.Second),
+				WriteTimeout:      common.Ptr(time.Second),
+				IdleTimeout:       common.Ptr(time.Second),
+			},
+			Net: &kkrthttp.ListenConfig{
+				KeepAlive: common.Ptr(time.Second),
+			},
+		},
+		Log: log.DefaultConfig(),
+	}
 	app, err := NewApp(
 		cfg,
 		WithLogger(zap.NewNop()),

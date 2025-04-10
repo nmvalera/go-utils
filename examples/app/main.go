@@ -5,46 +5,27 @@ import (
 	"fmt"
 
 	"github.com/kkrt-labs/go-utils/app"
-	"github.com/kkrt-labs/go-utils/log"
+	"github.com/kkrt-labs/go-utils/config"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
-
-type MyAppConfig struct {
-	App app.Config `mapstructure:"app"`
-	Log log.Config `mapstructure:"log"`
-}
 
 type MyService struct {
 }
 
 func main() {
-	v := viper.New()
-	f := pflag.NewFlagSet("test", pflag.ContinueOnError)
-	app.AddFlags(v, f)
-	log.AddFlags(v, f)
+	v := config.NewViper()
+	app.AddFlags(v, pflag.NewFlagSet("test", pflag.ContinueOnError))
 
-	cfg := &MyAppConfig{}
-	err := v.Unmarshal(cfg)
+	cfg := new(app.Config)
+	err := cfg.Unmarshal(v)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to unmarshal config: %v", err))
 	}
 
-	logCfg, err := log.ParseConfig(&cfg.Log)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to parse log config: %v", err))
-	}
-
-	logger, err := logCfg.Build()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to build logger: %v", err))
-	}
-
 	a, err := app.NewApp(
-		&cfg.App,
+		cfg,
 		app.WithName("my-app"),
 		app.WithVersion("1.0.0"),
-		app.WithLogger(logger),
 	)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create app: %v", err))
