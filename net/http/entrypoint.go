@@ -3,14 +3,11 @@ package http
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/kkrt-labs/go-utils/app/svc"
-	"github.com/kkrt-labs/go-utils/common"
 	"github.com/kkrt-labs/go-utils/log"
 	"github.com/kkrt-labs/go-utils/tag"
 	"go.uber.org/zap"
@@ -216,133 +213,4 @@ func (ep *Entrypoint) Ready(_ context.Context) error {
 // WithTags sets the tags for the entrypoint.
 func (ep *Entrypoint) WithTags(tags ...*tag.Tag) {
 	ep.tagged.WithTags(tags...)
-}
-
-type EntrypointConfig struct {
-	Addr *string       `mapstructure:"addr,omitempty"`
-	HTTP *ServerConfig `mapstructure:"http,omitempty"`
-	Net  *ListenConfig `mapstructure:"net,omitempty"`
-}
-
-func (cfg *EntrypointConfig) Entrypoint() (*Entrypoint, error) {
-	srv, err := cfg.HTTP.Server()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create server: %w", err)
-	}
-
-	netCfg, err := cfg.Net.ListenConfig()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create listen config: %w", err)
-	}
-
-	return NewEntrypoint(common.Val(cfg.Addr), WithServer(srv), WithListenConfig(netCfg))
-}
-
-type ServerConfig struct {
-	ReadTimeout       *string `mapstructure:"read-timeout,omitempty"`
-	ReadHeaderTimeout *string `mapstructure:"read-header-timeout,omitempty"`
-	WriteTimeout      *string `mapstructure:"write-timeout,omitempty"`
-	IdleTimeout       *string `mapstructure:"idle-timeout,omitempty"`
-	MaxHeaderBytes    *int    `mapstructure:"max-header-bytes,omitempty"`
-}
-
-func (cfg *ServerConfig) Server() (*http.Server, error) {
-	srv := &http.Server{
-		MaxHeaderBytes: common.Val(cfg.MaxHeaderBytes),
-	}
-
-	if cfg.ReadTimeout != nil {
-		timeout, err := time.ParseDuration(*cfg.ReadTimeout)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse server read timeout: %w", err)
-		}
-		srv.ReadTimeout = timeout
-	}
-
-	if cfg.ReadHeaderTimeout != nil {
-		timeout, err := time.ParseDuration(*cfg.ReadHeaderTimeout)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse server read header timeout: %w", err)
-		}
-		srv.ReadHeaderTimeout = timeout
-	}
-
-	if cfg.WriteTimeout != nil {
-		timeout, err := time.ParseDuration(*cfg.WriteTimeout)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse server write timeout: %w", err)
-		}
-		srv.WriteTimeout = timeout
-	}
-
-	if cfg.IdleTimeout != nil {
-		timeout, err := time.ParseDuration(*cfg.IdleTimeout)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse server idle timeout: %w", err)
-		}
-		srv.IdleTimeout = timeout
-	}
-
-	return srv, nil
-}
-
-type ListenConfig struct {
-	KeepAlive      *string               `mapstructure:"keep-alive,omitempty"`
-	KeepAliveProbe *KeepAliveProbeConfig `mapstructure:"keep-alive-probe,omitempty"`
-}
-
-func (cfg *ListenConfig) ListenConfig() (*net.ListenConfig, error) {
-	netCfg := &net.ListenConfig{}
-
-	if cfg.KeepAlive != nil {
-		idle, err := time.ParseDuration(*cfg.KeepAlive)
-		if err != nil {
-			return nil, err
-		}
-		netCfg.KeepAlive = idle
-	} else {
-		netCfg.KeepAlive = -1
-	}
-
-	if cfg.KeepAliveProbe != nil {
-		keepAliveProbe, err := cfg.KeepAliveProbe.KeepAliveProbe()
-		if err != nil {
-			return nil, err
-		}
-		netCfg.KeepAliveConfig = *keepAliveProbe
-	}
-
-	return netCfg, nil
-}
-
-type KeepAliveProbeConfig struct {
-	Enable   *bool   `mapstructure:"enable,omitempty"`
-	Idle     *string `mapstructure:"idle,omitempty"`
-	Interval *string `mapstructure:"interval,omitempty"`
-	Count    *int    `mapstructure:"count,omitempty"`
-}
-
-func (cfg *KeepAliveProbeConfig) KeepAliveProbe() (*net.KeepAliveConfig, error) {
-	netCfg := &net.KeepAliveConfig{
-		Enable: common.Val(cfg.Enable),
-		Count:  common.Val(cfg.Count),
-	}
-
-	if cfg.Idle != nil {
-		idle, err := time.ParseDuration(*cfg.Idle)
-		if err != nil {
-			return nil, err
-		}
-		netCfg.Idle = idle
-	}
-
-	if cfg.Interval != nil {
-		interval, err := time.ParseDuration(*cfg.Interval)
-		if err != nil {
-			return nil, err
-		}
-		netCfg.Interval = interval
-	}
-
-	return netCfg, nil
 }

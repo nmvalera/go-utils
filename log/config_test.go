@@ -4,16 +4,45 @@ import (
 	"testing"
 
 	"github.com/kkrt-labs/go-utils/common"
-	"github.com/spf13/viper"
+	"github.com/kkrt-labs/go-utils/config"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
-func TestParseConfig(t *testing.T) {
-	cfg := &Config{
-		Level:            common.Ptr("info"),
-		Format:           common.Ptr("json"),
+func TestViperConfig(t *testing.T) {
+	v := config.NewViper()
+	v.Set("log.level", "debug")
+	v.Set("log.format", "json")
+	v.Set("log.enable-stacktrace", true)
+	v.Set("log.enable-caller", true)
+	v.Set("log.encoding.message-key", "msg")
+	v.Set("log.encoding.level-key", "level")
+	v.Set("log.encoding.time-key", "time")
+	v.Set("log.encoding.name-key", "logger")
+	v.Set("log.encoding.caller-key", "caller")
+	v.Set("log.encoding.function-key", "function")
+	v.Set("log.encoding.stacktrace-key", "stacktrace")
+	v.Set("log.encoding.skip-line-ending", false)
+	v.Set("log.encoding.line-ending", "\n")
+	v.Set("log.encoding.level-encoder", "capitalColor")
+	v.Set("log.encoding.time-encoder", "rfc3339")
+	v.Set("log.encoding.duration-encoder", "s")
+	v.Set("log.encoding.caller-encoder", "short")
+	v.Set("log.encoding.name-encoder", "full")
+	v.Set("log.encoding.console-separator", "\t")
+	v.Set("log.sampling.initial", 100)
+	v.Set("log.sampling.thereafter", 100)
+	v.Set("log.output-paths", []string{"stderr"})
+	v.Set("log.error-output-paths", []string{"stderr"})
+
+	cfg := new(Config)
+	err := cfg.Unmarshal(v)
+	require.NoError(t, err)
+
+	expectedCfg := &Config{
+		Format:           common.Ptr(JSONFormat),
+		Level:            common.Ptr(DebugLevel),
 		EnableStacktrace: common.Ptr(true),
 		EnableCaller:     common.Ptr(true),
 		Encoder: &EncoderConfig{
@@ -26,11 +55,11 @@ func TestParseConfig(t *testing.T) {
 			StacktraceKey:    common.Ptr("stacktrace"),
 			SkipLineEnding:   common.Ptr(false),
 			LineEnding:       common.Ptr("\n"),
-			LevelEncoder:     common.Ptr("capitalColor"),
-			TimeEncoder:      common.Ptr("rfc3339"),
-			DurationEncoder:  common.Ptr("s"),
-			CallerEncoder:    common.Ptr("short"),
-			NameEncoder:      common.Ptr("full"),
+			LevelEncoder:     common.Ptr(LevelEncoderCapitalColor),
+			TimeEncoder:      common.Ptr(TimeEncoderRFC3339),
+			DurationEncoder:  common.Ptr(DurationEncoderSeconds),
+			CallerEncoder:    common.Ptr(CallerEncoderShort),
+			NameEncoder:      common.Ptr(NameEncoderFull),
 			ConsoleSeparator: common.Ptr("\t"),
 		},
 		Sampling: &SamplingConfig{
@@ -40,101 +69,72 @@ func TestParseConfig(t *testing.T) {
 		OutputPaths:      common.PtrSlice("stderr"),
 		ErrorOutputPaths: common.PtrSlice("stderr"),
 	}
-
-	zapCfg, err := ParseConfig(cfg)
-	require.NoError(t, err)
-
-	assert.Equal(t, zap.InfoLevel, zapCfg.Level.Level())
-	assert.Equal(t, "json", zapCfg.Encoding)
-	assert.False(t, zapCfg.DisableStacktrace)
-	assert.False(t, zapCfg.DisableCaller)
-
-	encoderCfg := zapCfg.EncoderConfig
-	assert.Equal(t, "msg", encoderCfg.MessageKey)
-	assert.Equal(t, "level", encoderCfg.LevelKey)
-	assert.Equal(t, "time", encoderCfg.TimeKey)
-	assert.Equal(t, "logger", encoderCfg.NameKey)
-	assert.Equal(t, "caller", encoderCfg.CallerKey)
-	assert.Equal(t, "function", encoderCfg.FunctionKey)
-	assert.Equal(t, "stacktrace", encoderCfg.StacktraceKey)
-	assert.False(t, encoderCfg.SkipLineEnding)
-	assert.Equal(t, "\n", encoderCfg.LineEnding)
-	assert.Equal(t, "\t", encoderCfg.ConsoleSeparator)
-
-	samplingCfg := zapCfg.Sampling
-	assert.Equal(t, 100, samplingCfg.Initial)
-	assert.Equal(t, 100, samplingCfg.Thereafter)
-
-	outputPaths := zapCfg.OutputPaths
-	assert.Equal(t, []string{"stderr"}, outputPaths)
-
-	errorOutputPaths := zapCfg.ErrorOutputPaths
-	assert.Equal(t, []string{"stderr"}, errorOutputPaths)
+	assert.Equal(t, expectedCfg, cfg)
 }
 
-func TestViperConfig(t *testing.T) {
-	v := viper.New()
-	v.Set("log.level", "debug")
-	v.Set("log.format", "json")
-	v.Set("log.enable-stacktrace", true)
-	v.Set("log.enable-caller", true)
-	v.Set("log.encoder.message-key", "msg")
-	v.Set("log.encoder.level-key", "level")
-	v.Set("log.encoder.time-key", "time")
-	v.Set("log.encoder.name-key", "logger")
-	v.Set("log.encoder.caller-key", "caller")
-	v.Set("log.encoder.function-key", "function")
-	v.Set("log.encoder.stacktrace-key", "stacktrace")
-	v.Set("log.encoder.skip-line-ending", false)
-	v.Set("log.encoder.line-ending", "\n")
-	v.Set("log.encoder.level-encoder", "capitalColor")
-	v.Set("log.encoder.time-encoder", "rfc3339")
-	v.Set("log.encoder.duration-encoder", "s")
-	v.Set("log.encoder.caller-encoder", "short")
-	v.Set("log.encoder.name-encoder", "full")
-	v.Set("log.encoder.console-separator", "\t")
-	v.Set("log.sampling.initial", 100)
-	v.Set("log.sampling.thereafter", 100)
-	v.Set("log.output-paths", []string{"stderr"})
-	v.Set("log.error-output-paths", []string{"stderr"})
-
-	type TestConfig struct {
-		Log Config `mapstructure:"log"`
+func TestEnv(t *testing.T) {
+	env, err := (&Config{
+		Level:            common.Ptr(InfoLevel),
+		Format:           common.Ptr(TextFormat),
+		EnableStacktrace: common.Ptr(false),
+		EnableCaller:     common.Ptr(false),
+		Encoder: &EncoderConfig{
+			MessageKey:       common.Ptr("msg-test"),
+			LevelKey:         common.Ptr("level-test"),
+			TimeKey:          common.Ptr("time-test"),
+			NameKey:          common.Ptr("logger-test"),
+			CallerKey:        common.Ptr("caller-test"),
+			FunctionKey:      common.Ptr("function-test"),
+			StacktraceKey:    common.Ptr("stacktrace-test"),
+			SkipLineEnding:   common.Ptr(true),
+			LineEnding:       common.Ptr("line-ending-test"),
+			LevelEncoder:     common.Ptr(LevelEncoderCapitalColor),
+			TimeEncoder:      common.Ptr(TimeEncoderRFC3339),
+			DurationEncoder:  common.Ptr(DurationEncoderSeconds),
+			CallerEncoder:    common.Ptr(CallerEncoderShort),
+			NameEncoder:      common.Ptr(NameEncoderFull),
+			ConsoleSeparator: common.Ptr("separator-test"),
+		},
+		Sampling: &SamplingConfig{
+			Initial:    common.Ptr(1000),
+			Thereafter: common.Ptr(1000),
+		},
+		OutputPaths:      common.PtrSlice("output-path-test#1,output-path-test#2"),
+		ErrorOutputPaths: common.PtrSlice("error-output-path-test#1,error-output-path-test#2"),
+	}).Env()
+	require.NoError(t, err)
+	expected := map[string]string{
+		"LOG_LEVEL":                      "info",
+		"LOG_FORMAT":                     "text",
+		"LOG_ENABLE_STACKTRACE":          "false",
+		"LOG_ENABLE_CALLER":              "false",
+		"LOG_ENCODING_MESSAGE_KEY":       "msg-test",
+		"LOG_ENCODING_LEVEL_KEY":         "level-test",
+		"LOG_ENCODING_TIME_KEY":          "time-test",
+		"LOG_ENCODING_NAME_KEY":          "logger-test",
+		"LOG_ENCODING_CALLER_KEY":        "caller-test",
+		"LOG_ENCODING_FUNCTION_KEY":      "function-test",
+		"LOG_ENCODING_STACKTRACE_KEY":    "stacktrace-test",
+		"LOG_ENCODING_SKIP_LINE_ENDING":  "true",
+		"LOG_ENCODING_LINE_ENDING":       "line-ending-test",
+		"LOG_ENCODING_LEVEL_ENCODER":     "capitalColor",
+		"LOG_ENCODING_TIME_ENCODER":      "rfc3339",
+		"LOG_ENCODING_DURATION_ENCODER":  "s",
+		"LOG_ENCODING_CALLER_ENCODER":    "short",
+		"LOG_ENCODING_NAME_ENCODER":      "full",
+		"LOG_ENCODING_CONSOLE_SEPARATOR": "separator-test",
+		"LOG_SAMPLING_INITIAL":           "1000",
+		"LOG_SAMPLING_THEREAFTER":        "1000",
+		"LOG_OUTPUT_PATHS":               "output-path-test#1,output-path-test#2",
+		"LOG_ERROR_OUTPUT_PATHS":         "error-output-path-test#1,error-output-path-test#2",
 	}
-
-	var cfg TestConfig
-	err := v.Unmarshal(&cfg)
-	require.NoError(t, err)
-
-	assert.Equal(t, "debug", *cfg.Log.Level)
-	assert.Equal(t, "json", *cfg.Log.Format)
-	assert.True(t, *cfg.Log.EnableStacktrace)
-	assert.True(t, *cfg.Log.EnableCaller)
-
-	encoderCfg := cfg.Log.Encoder
-	assert.Equal(t, "msg", *encoderCfg.MessageKey)
-	assert.Equal(t, "level", *encoderCfg.LevelKey)
-	assert.Equal(t, "time", *encoderCfg.TimeKey)
-	assert.Equal(t, "logger", *encoderCfg.NameKey)
-	assert.Equal(t, "caller", *encoderCfg.CallerKey)
-	assert.Equal(t, "function", *encoderCfg.FunctionKey)
-	assert.Equal(t, "stacktrace", *encoderCfg.StacktraceKey)
-	assert.False(t, *encoderCfg.SkipLineEnding)
-	assert.Equal(t, "\n", *encoderCfg.LineEnding)
-	assert.Equal(t, "\t", *encoderCfg.ConsoleSeparator)
-
-	samplingCfg := cfg.Log.Sampling
-	assert.Equal(t, 100, *samplingCfg.Initial)
-	assert.Equal(t, 100, *samplingCfg.Thereafter)
-
-	assert.Equal(t, []string{"stderr"}, common.ValSlice(*cfg.Log.OutputPaths...))
-	assert.Equal(t, []string{"stderr"}, common.ValSlice(*cfg.Log.ErrorOutputPaths...))
+	assert.Equal(t, expected, env)
 }
 
-func TestLoadEnv(t *testing.T) {
+func TestAddFlagsAndLoadEnv(t *testing.T) {
 	cfg := &Config{
-		Level:            common.Ptr("level-test"),
-		Format:           common.Ptr("format-test"),
+		Level:            common.Ptr(InfoLevel),
+		Format:           common.Ptr(TextFormat),
 		EnableStacktrace: common.Ptr(true),
 		EnableCaller:     common.Ptr(true),
 		Encoder: &EncoderConfig{
@@ -147,11 +147,11 @@ func TestLoadEnv(t *testing.T) {
 			StacktraceKey:    common.Ptr("stacktrace-test"),
 			SkipLineEnding:   common.Ptr(true),
 			LineEnding:       common.Ptr("line-ending-test"),
-			LevelEncoder:     common.Ptr("level-encoder-test"),
-			TimeEncoder:      common.Ptr("time-encoder-test"),
-			DurationEncoder:  common.Ptr("duration-encoder-test"),
-			CallerEncoder:    common.Ptr("caller-encoder-test"),
-			NameEncoder:      common.Ptr("name-encoder-test"),
+			LevelEncoder:     common.Ptr(LevelEncoderCapitalColor),
+			TimeEncoder:      common.Ptr(TimeEncoderRFC3339),
+			DurationEncoder:  common.Ptr(DurationEncoderSeconds),
+			CallerEncoder:    common.Ptr(CallerEncoderShort),
+			NameEncoder:      common.Ptr(NameEncoderFull),
 			ConsoleSeparator: common.Ptr("console-separator-test"),
 		},
 		Sampling: &SamplingConfig{
@@ -162,28 +162,40 @@ func TestLoadEnv(t *testing.T) {
 		ErrorOutputPaths: common.PtrSlice("error-output-path-test"),
 	}
 
+	// Add the flags
+	v := config.NewViper()
+	set := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	set.SortFlags = true
+	err := AddFlags(v, set)
+	require.NoError(t, err)
+
+	expectedUsage := "      --log-enable-caller                       Enable caller [env: LOG_ENABLE_CALLER]\n      --log-enable-stacktrace                   Enable automatic stacktrace capturing [env: LOG_ENABLE_STACKTRACE]\n      --log-encoding-caller-encoder string      Encoding: Primitive representation for the log caller (e.g. 'full' [env: LOG_ENCODING_CALLER_ENCODER] (default \"short\")\n      --log-encoding-caller-key string          Encoding: Key for the log caller (if empty [env: LOG_ENCODING_CALLER_KEY] (default \"caller\")\n      --log-encoding-console-separator string   Encoding: Field separator used by the console encoder [env: LOG_ENCODING_CONSOLE_SEPARATOR] (default \"\\t\")\n      --log-encoding-duration-encoder string    Encoding: Primitive representation for the log duration (e.g. 'string' [env: LOG_ENCODING_DURATION_ENCODER] (default \"s\")\n      --log-encoding-function-key string        Encoding: Key for the log function (if empty [env: LOG_ENCODING_FUNCTION_KEY]\n      --log-encoding-level-encoder string       Encoding: Primitive representation for the log level (e.g. 'capital' [env: LOG_ENCODING_LEVEL_ENCODER] (default \"capitalColor\")\n      --log-encoding-level-key string           Encoding: Key for the log level (if empty [env: LOG_ENCODING_LEVEL_KEY] (default \"level\")\n      --log-encoding-line-ending string         Encoding: Line ending [env: LOG_ENCODING_LINE_ENDING] (default \"\\n\")\n      --log-encoding-message-key string         Encoding: Key for the log message (if empty [env: LOG_ENCODING_MESSAGE_KEY] (default \"msg\")\n      --log-encoding-name-encoder string        Encoding: Primitive representation for the log logger name (e.g. 'full' [env: LOG_ENCODING_NAME_ENCODER] (default \"full\")\n      --log-encoding-name-key string            Encoding: Key for the log logger name (if empty [env: LOG_ENCODING_NAME_KEY] (default \"logger\")\n      --log-encoding-skip-line-ending           Encoding: Skip the line ending [env: LOG_ENCODING_SKIP_LINE_ENDING]\n      --log-encoding-stacktrace-key string      Encoding: Key for the log stacktrace (if empty [env: LOG_ENCODING_STACKTRACE_KEY] (default \"stacktrace\")\n      --log-encoding-time-encoder string        Encoding: Primitive representation for the log timestamp (e.g. 'rfc3339nano' [env: LOG_ENCODING_TIME_ENCODER] (default \"rfc3339\")\n      --log-encoding-time-key string            Encoding: Key for the log timestamp (if empty [env: LOG_ENCODING_TIME_KEY] (default \"ts\")\n      --log-err-output strings                  List of URLs to write internal logger errors to [env: LOG_ERROR_OUTPUT_PATHS] (default [stderr])\n      --log-format string                       Log format [env: LOG_FORMAT] (default \"text\")\n      --log-level string                        Minimum enabled logging level [env: LOG_LEVEL] (default \"info\")\n      --log-output strings                      List of URLs or file paths to write logging output to [env: LOG_OUTPUT_PATHS] (default [stderr])\n      --log-sampling-initial int                Sampling: Number of log entries with the same level and message to log before dropping entries [env: LOG_SAMPLING_INITIAL] (default 100)\n      --log-sampling-thereafter int             Sampling: After the initial number of entries [env: LOG_SAMPLING_THEREAFTER] (default 100)\n"
+	assert.Equal(t, expectedUsage, set.FlagUsages())
+
 	// Generate the environment variables
-	env := cfg.Env()
+	env, err := cfg.Env()
+	require.NoError(t, err)
 	for k, v := range env {
-		t.Setenv(k, *v)
+		t.Setenv(k, v)
 	}
 
 	// Load the environment variables
-	v := viper.New()
 	loadedCfg := new(Config)
-	err := loadedCfg.Load(v)
+	err = loadedCfg.Unmarshal(v)
 	require.NoError(t, err)
 
 	// Assert the loaded config is equal to the original config
 	assert.Equal(t, *cfg, *loadedCfg)
 }
 
-func TestEnv(t *testing.T) {
-	cfg := &Config{
-		Level: common.Ptr("level-test"),
-	}
+func TestUnmarshalFromDefaults(t *testing.T) {
+	v := config.NewViper()
+	err := AddFlags(v, pflag.NewFlagSet("test", pflag.ContinueOnError))
+	require.NoError(t, err)
 
-	env := cfg.Env()
-	assert.Len(t, env, 1)
-	assert.Equal(t, *env["LOG_LEVEL"], "level-test")
+	cfg := new(Config)
+	err = cfg.Unmarshal(v)
+	require.NoError(t, err)
+
+	assert.Equal(t, DefaultConfig(), cfg)
 }

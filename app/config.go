@@ -1,123 +1,48 @@
 package app
 
 import (
-	"net/http"
-
 	"github.com/kkrt-labs/go-utils/common"
+	"github.com/kkrt-labs/go-utils/config"
+	"github.com/kkrt-labs/go-utils/log"
 	kkrthttp "github.com/kkrt-labs/go-utils/net/http"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
+func DefaultConfig() *Config {
+	mainEp := kkrthttp.DefaultEntrypointConfig()
+	mainEp.Addr = common.Ptr(":8080")
+	healthzEp := kkrthttp.DefaultEntrypointConfig()
+	healthzEp.Addr = common.Ptr(":8081")
+	return &Config{
+		MainEntrypoint:    mainEp,
+		HealthzEntrypoint: healthzEp,
+		Log:               log.DefaultConfig(),
+		StartTimeout:      common.Ptr("10s"),
+		StopTimeout:       common.Ptr("10s"),
+	}
+}
+
+// Config is the configuration for the application.
 type Config struct {
-	MainEntrypoint    *kkrthttp.EntrypointConfig `mapstructure:"main-entrypoint"`
-	HealthzEntrypoint *kkrthttp.EntrypointConfig `mapstructure:"healthz-entrypoint"`
-	StartTimeout      *string                    `mapstructure:"start-timeout"`
-	StopTimeout       *string                    `mapstructure:"stop-timeout"`
+	MainEntrypoint    *kkrthttp.EntrypointConfig `key:"main-ep" env:"MAIN_EP" flag:"main-ep" desc:"Main entrypoint"`
+	HealthzEntrypoint *kkrthttp.EntrypointConfig `key:"healthz-ep" env:"HEALTHZ_EP" flag:"healthz-ep" desc:"Healthz entrypoint"`
+	Log               *log.Config                `key:"log"`
+	StartTimeout      *string                    `key:"start-timeout" env:"START_TIMEOUT" flag:"start-timeout" desc:"Start timeout"`
+	StopTimeout       *string                    `key:"stop-timeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
 }
 
-func (cfg *Config) Load(v *viper.Viper) error {
-	type embedConfig struct {
-		App *Config `mapstructure:"app"`
-	}
-	AddFlags(v, new(pflag.FlagSet))
-	return v.Unmarshal(&embedConfig{cfg})
+// Env returns the environment variables for the given Config.
+func (cfg *Config) Env() (map[string]string, error) {
+	return config.Env(cfg, nil)
 }
 
-func (cfg *Config) Env() map[string]*string {
-	m := make(map[string]*string)
-	if cfg.MainEntrypoint != nil {
-		if cfg.MainEntrypoint.Addr != nil {
-			m[mainEntrypointFlag.Env] = cfg.MainEntrypoint.Addr
-		}
-		if cfg.MainEntrypoint.HTTP != nil {
-			if cfg.MainEntrypoint.HTTP.ReadTimeout != nil {
-				m[mainReadTimeoutFlag.Env] = cfg.MainEntrypoint.HTTP.ReadTimeout
-			}
-			if cfg.MainEntrypoint.HTTP.ReadHeaderTimeout != nil {
-				m[mainReadHeaderTimeoutFlag.Env] = cfg.MainEntrypoint.HTTP.ReadHeaderTimeout
-			}
-			if cfg.MainEntrypoint.HTTP.WriteTimeout != nil {
-				m[mainWriteTimeoutFlag.Env] = cfg.MainEntrypoint.HTTP.WriteTimeout
-			}
-			if cfg.MainEntrypoint.HTTP.IdleTimeout != nil {
-				m[mainIdleTimeoutFlag.Env] = cfg.MainEntrypoint.HTTP.IdleTimeout
-			}
-		}
-		if cfg.MainEntrypoint.Net != nil {
-			if cfg.MainEntrypoint.Net.KeepAlive != nil {
-				m[mainKeepAliveFlag.Env] = cfg.MainEntrypoint.Net.KeepAlive
-			}
-		}
-	}
-
-	if cfg.HealthzEntrypoint != nil {
-		if cfg.HealthzEntrypoint.Addr != nil {
-			m[healthzEntrypointFlag.Env] = cfg.HealthzEntrypoint.Addr
-		}
-		if cfg.HealthzEntrypoint.HTTP != nil {
-			if cfg.HealthzEntrypoint.HTTP.ReadTimeout != nil {
-				m[healthzReadTimeoutFlag.Env] = cfg.HealthzEntrypoint.HTTP.ReadTimeout
-			}
-			if cfg.HealthzEntrypoint.HTTP.ReadHeaderTimeout != nil {
-				m[healthzReadHeaderTimeoutFlag.Env] = cfg.HealthzEntrypoint.HTTP.ReadHeaderTimeout
-			}
-			if cfg.HealthzEntrypoint.HTTP.WriteTimeout != nil {
-				m[healthzWriteTimeoutFlag.Env] = cfg.HealthzEntrypoint.HTTP.WriteTimeout
-			}
-			if cfg.HealthzEntrypoint.HTTP.IdleTimeout != nil {
-				m[healthzIdleTimeoutFlag.Env] = cfg.HealthzEntrypoint.HTTP.IdleTimeout
-			}
-		}
-		if cfg.HealthzEntrypoint.Net != nil {
-			if cfg.HealthzEntrypoint.Net.KeepAlive != nil {
-				m[healthzKeepAliveFlag.Env] = cfg.HealthzEntrypoint.Net.KeepAlive
-			}
-		}
-	}
-
-	return m
+// Unmarshal unmarshals the given viper into the Config.
+func (cfg *Config) Unmarshal(v *viper.Viper) error {
+	return config.Unmarshal(cfg, v)
 }
 
-var defaultConfig = &Config{
-	MainEntrypoint: &kkrthttp.EntrypointConfig{
-		Addr: common.Ptr(":8080"),
-		HTTP: &kkrthttp.ServerConfig{
-			ReadTimeout:       common.Ptr("30s"),
-			ReadHeaderTimeout: common.Ptr("30s"),
-			WriteTimeout:      common.Ptr("30s"),
-			IdleTimeout:       common.Ptr("30s"),
-			MaxHeaderBytes:    common.Ptr(http.DefaultMaxHeaderBytes),
-		},
-		Net: &kkrthttp.ListenConfig{
-			KeepAlive: common.Ptr("0"),
-			KeepAliveProbe: &kkrthttp.KeepAliveProbeConfig{
-				Enable:   common.Ptr(false),
-				Idle:     common.Ptr("15s"),
-				Interval: common.Ptr("15s"),
-				Count:    common.Ptr(9),
-			},
-		},
-	},
-	HealthzEntrypoint: &kkrthttp.EntrypointConfig{
-		Addr: common.Ptr(":8081"),
-		HTTP: &kkrthttp.ServerConfig{
-			ReadTimeout:       common.Ptr("30s"),
-			ReadHeaderTimeout: common.Ptr("30s"),
-			WriteTimeout:      common.Ptr("30s"),
-			IdleTimeout:       common.Ptr("30s"),
-			MaxHeaderBytes:    common.Ptr(http.DefaultMaxHeaderBytes),
-		},
-		Net: &kkrthttp.ListenConfig{
-			KeepAlive: common.Ptr("0"),
-			KeepAliveProbe: &kkrthttp.KeepAliveProbeConfig{
-				Enable:   common.Ptr(false),
-				Idle:     common.Ptr("15s"),
-				Interval: common.Ptr("15s"),
-				Count:    common.Ptr(9),
-			},
-		},
-	},
-	StartTimeout: common.Ptr("10s"),
-	StopTimeout:  common.Ptr("10s"),
+// AddFlags adds flags to the given viper and pflag.FlagSet.
+func AddFlags(v *viper.Viper, f *pflag.FlagSet) error {
+	return config.AddFlags(DefaultConfig(), v, f, nil)
 }

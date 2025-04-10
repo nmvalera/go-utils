@@ -67,6 +67,12 @@ func NewApp(cfg *Config, opts ...Option) (*App, error) {
 		prometheus:    prometheus.NewRegistry(),
 	}
 
+	logger, err := cfg.Log.ZapConfig().Build()
+	if err != nil {
+		return nil, err
+	}
+	app.logger = logger
+
 	for _, opt := range opts {
 		if err := opt(app); err != nil {
 			return nil, err
