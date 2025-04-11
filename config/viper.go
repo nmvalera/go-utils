@@ -18,6 +18,7 @@ var (
 	flagTagName  = "flag"
 	keyTagName   = "key"
 	envSliceSep  = " " // We use space as a separator for env variables because it's used by viper when loading env variables
+	skipTag      = "-"
 	nilStr       = "<nil>"
 )
 
@@ -79,7 +80,15 @@ func Env(cfg any, hook func(reflect.Value) (reflect.Value, error)) (map[string]s
 }
 
 // AddFlags adds flags to the given viper and flag set.
-// It uses the `flag` struct field tag to get the flag name, environment variable name, description, and short flag.
+//
+// It uses the following struct field tags
+// - `flag` struct field tag to get the flag name, environment variable name, description, and short flag.
+// - `env` struct field tag to get the environment variable name.
+// - `desc` struct field tag to get the description.
+// - `short` struct field tag to get the short flag.
+// - `key` struct field tag to get the key.
+//
+// It sets the default values as set on the defaultConfig object.
 func AddFlags(defaultConfig any, v *viper.Viper, f *pflag.FlagSet, hook func(reflect.Value) (reflect.Value, error)) error {
 	if hook == nil {
 		hook = GlobalEncodeHook()
@@ -234,24 +243,36 @@ loop:
 }
 
 func prepareViperKey(parts, fieldParts []string) string {
+	finalParts := make([]string, 0, len(parts))
 	for i, viperKeyPart := range parts {
-		if viperKeyPart == "" {
-			parts[i] = fieldParts[i]
+		switch viperKeyPart {
+		case "":
+			finalParts = append(finalParts, fieldParts[i])
+		case skipTag:
+			continue
+		default:
+			finalParts = append(finalParts, viperKeyPart)
 		}
 	}
-	viperKey := strings.Join(parts, ".")
+	viperKey := strings.Join(finalParts, ".")
 	viperKey = strings.ReplaceAll(viperKey, "_", ".")
 	viperKey = strings.ReplaceAll(viperKey, " ", ".")
 	return viperKey
 }
 
 func prepareFlagName(parts, fieldParts []string) string {
+	finalParts := make([]string, 0, len(parts))
 	for i, flagNamePart := range parts {
-		if flagNamePart == "" {
-			parts[i] = fieldParts[i]
+		switch flagNamePart {
+		case "":
+			finalParts = append(finalParts, fieldParts[i])
+		case skipTag:
+			continue
+		default:
+			finalParts = append(finalParts, flagNamePart)
 		}
 	}
-	flagName := strings.Join(parts, "-")
+	flagName := strings.Join(finalParts, "-")
 	flagName = strings.ReplaceAll(flagName, ".", "-")
 	flagName = strings.ReplaceAll(flagName, "_", "-")
 	flagName = strings.ReplaceAll(flagName, " ", "-")
@@ -260,12 +281,18 @@ func prepareFlagName(parts, fieldParts []string) string {
 }
 
 func prepareEnvName(envNameParts, fieldParts []string) string {
+	finalParts := make([]string, 0, len(envNameParts))
 	for i, envNamePart := range envNameParts {
-		if envNamePart == "" {
-			envNameParts[i] = fieldParts[i]
+		switch envNamePart {
+		case "":
+			finalParts = append(finalParts, fieldParts[i])
+		case skipTag:
+			continue
+		default:
+			finalParts = append(finalParts, envNamePart)
 		}
 	}
-	envName := strings.Join(envNameParts, "_")
+	envName := strings.Join(finalParts, "_")
 	envName = strings.ReplaceAll(envName, ".", "_")
 	envName = strings.ReplaceAll(envName, " ", "_")
 	envName = strings.ToUpper(envName)

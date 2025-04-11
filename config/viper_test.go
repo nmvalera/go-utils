@@ -11,7 +11,7 @@ import (
 )
 
 type NestedConfig struct {
-	Flag7 string `key:"flag7" env:"FLAG7" desc:"Flag 7" short:"g"`
+	Flag7 string `key:"flag7" env:"FLAG7" desc:"Flag 7"`
 }
 
 type TestConfig struct {
@@ -28,6 +28,8 @@ type TestConfig struct {
 	Flag8  []string  `key:"flag8" env:"FLAG8" desc:"Flag 8" short:"h"`
 	Flag9  [2]string `key:"flag9" env:"FLAG9" desc:"Flag 9" short:"i"`
 	Flag10 []*string `key:"flag10" env:"FLAG10" desc:"Flag 10" short:"j"`
+
+	NestedWithSkip NestedConfig `key:"nested-with-skip" env:"-" flag:"-"`
 }
 
 func TestAddFlags(t *testing.T) {
@@ -64,6 +66,9 @@ func TestAddFlags(t *testing.T) {
 		"nested": map[string]interface{}{
 			"flag7": "flag7-default",
 		},
+		"nested-with-skip": map[string]interface{}{
+			"flag7": "",
+		},
 	}
 
 	assert.Equal(t, expected, v.AllSettings())
@@ -77,6 +82,9 @@ func TestEnv(t *testing.T) {
 		Nested: NestedConfig{
 			Flag7: "test7",
 		},
+		NestedWithSkip: NestedConfig{
+			Flag7: "test7",
+		},
 	}
 
 	m, err := Env(cfg, nil)
@@ -87,6 +95,7 @@ func TestEnv(t *testing.T) {
 		"FLAG2":        "10",
 		"FLAG3":        "true",
 		"NESTED_FLAG7": "test7",
+		"FLAG7":        "test7",
 	}
 	assert.Equal(t, expected, m)
 }

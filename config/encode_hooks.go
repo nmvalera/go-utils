@@ -32,8 +32,12 @@ func CombineHooks(hooks ...EncodeHookFunc) EncodeHookFunc {
 
 func StringerHook() EncodeHookFunc {
 	return func(val reflect.Value) (reflect.Value, error) {
-		if val.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) && !val.IsNil() {
-			return reflect.ValueOf(val.Interface().(fmt.Stringer).String()), nil
+		if val.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {
+			switch {
+			case val.Kind() != reflect.Ptr,
+				val.Kind() == reflect.Ptr && !val.IsNil():
+				return reflect.ValueOf(val.Interface().(fmt.Stringer).String()), nil
+			}
 		}
 		return val, nil
 	}
