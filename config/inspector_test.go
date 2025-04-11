@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/kkrt-labs/go-utils/common"
@@ -13,7 +15,15 @@ import (
 type CustomInt int
 
 func (i CustomInt) String() string {
-	return fmt.Sprintf("custom int: %d", i)
+	return fmt.Sprintf("custom-int-%d", i)
+}
+
+func CustomIntDecodeHook(f, t reflect.Type, data any) (any, error) {
+	if t == reflect.TypeOf(CustomInt(0)) && f.Kind() == reflect.String {
+		i, err := strconv.Atoi(strings.TrimPrefix(data.(string), "custom-int-"))
+		return CustomInt(i), err
+	}
+	return data, nil
 }
 
 type Interface interface {
@@ -227,15 +237,15 @@ func TestEncoder(t *testing.T) {
 			FieldParts: []string{"Custom"},
 			TagParts:   map[string][]string{"foo": {"custom"}},
 			Value:      reflect.ValueOf(CustomInt(0)),
-			Processed:  reflect.ValueOf("custom int: 0"),
-			Encoded:    "custom int: 0",
+			Processed:  reflect.ValueOf("custom-int-0"),
+			Encoded:    "custom-int-0",
 		},
 		"CustomIntNil": {
 			FieldParts: []string{"CustomIntNil"},
 			TagParts:   map[string][]string{"foo": {"custom_int_nil"}},
 			Value:      reflect.ValueOf((*CustomInt)(nil)),
-			Processed:  reflect.ValueOf("custom int: 0"),
-			Encoded:    "custom int: 0",
+			Processed:  reflect.ValueOf("custom-int-0"),
+			Encoded:    "custom-int-0",
 		},
 		"Uints.Uint": {
 			FieldParts: []string{"Uints", "Uint"},
@@ -276,15 +286,15 @@ func TestEncoder(t *testing.T) {
 			FieldParts: []string{"ArrayCustom"},
 			TagParts:   map[string][]string{"foo": {"array_custom"}},
 			Value:      reflect.ValueOf([2]CustomInt{CustomInt(1), CustomInt(2)}),
-			Processed:  reflect.ValueOf([2]string{"custom int: 1", "custom int: 2"}),
-			Encoded:    "custom int: 1 custom int: 2",
+			Processed:  reflect.ValueOf([2]string{"custom-int-1", "custom-int-2"}),
+			Encoded:    "custom-int-1 custom-int-2",
 		},
 		"SliceCustom": {
 			FieldParts: []string{"SliceCustom"},
 			TagParts:   map[string][]string{"foo": {"slice_custom"}},
 			Value:      reflect.ValueOf([]*CustomInt{common.Ptr(CustomInt(1)), nil, common.Ptr(CustomInt(2))}),
-			Processed:  reflect.ValueOf([]*string{common.Ptr("custom int: 1"), nil, common.Ptr("custom int: 2")}),
-			Encoded:    "custom int: 1 <nil> custom int: 2",
+			Processed:  reflect.ValueOf([]string{"custom-int-1", "<nil>", "custom-int-2"}),
+			Encoded:    "custom-int-1 <nil> custom-int-2",
 		},
 		"Interface": {
 			FieldParts: []string{"Interface"},

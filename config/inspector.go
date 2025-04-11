@@ -238,10 +238,15 @@ func (i *Inspector) encodeValue(val reflect.Value) (reflect.Value, string, error
 	case reflect.Ptr:
 		if processedVal.IsNil() {
 			// If the pointer is nil, we need to encode the zero value of the element type to know the possible processed type
-			// then we return a nil pointer to the processed type
+			// then we return the processed zero value
 			// the encoded string is arbitrarily set to "<nil>"
 			processedZero, _, _ := i.encodeValue(reflect.Zero(processedVal.Type().Elem()))
-			return reflect.Zero(reflect.PointerTo(processedZero.Type())), nilStr, nil
+
+			if processedZero.Kind() == reflect.String {
+				return reflect.ValueOf(nilStr), nilStr, nil
+			}
+
+			return processedZero, nilStr, nil
 		}
 
 		// If the pointer is not nil, we need to encode the value it points to
@@ -250,17 +255,7 @@ func (i *Inspector) encodeValue(val reflect.Value) (reflect.Value, string, error
 			return reflect.Value{}, "", err
 		}
 
-		// if the processed element is addressable, we can return its address (which corresponds to the original pointer)
-		if processedElem.CanAddr() {
-			// This ensures that the original pointer is returned, if the processing kept the original object unchanged
-			return processedElem.Addr(), encodedElem, nil
-		}
-
-		// if the processed element is not addressable, we create a new pointer to the processed element and set its value
-		ptrElem := reflect.New(processedElem.Type())
-		ptrElem.Elem().Set(processedElem)
-
-		return ptrElem, encodedElem, nil
+		return processedElem, encodedElem, nil
 	case reflect.Array, reflect.Slice:
 		return i.encodeArrayValue(processedVal)
 	}

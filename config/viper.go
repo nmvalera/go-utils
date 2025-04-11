@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
-	"github.com/kkrt-labs/go-utils/common"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -105,138 +104,115 @@ func AddFlags(defaultConfig any, v *viper.Viper, f *pflag.FlagSet, hook func(ref
 		return fmt.Errorf("invalid configuration object: %w", err)
 	}
 
-loop:
 	for field, info := range infos {
 		viperKey := prepareViperKey(info.TagParts[keyTagName], info.FieldParts)
 		flagName := prepareFlagName(info.TagParts[flagTagName], info.FieldParts)
 		envName := prepareEnvName(info.TagParts[envTagName], info.FieldParts)
 
 		desc := prepareDesc(info.TagParts[descTagName])
+		usage := FlagDesc(desc, envName)
 
 		short, err := prepareShort(info.TagParts[shortTagName])
 		if err != nil {
 			return err
 		}
 
-		kind := getKind(info.Processed.Kind())
-		typ := info.Processed.Type()
-
-		switch kind {
+		switch info.Processed.Kind() {
 		case reflect.String:
-			stringFlag := &StringFlag{
-				ViperKey:    viperKey,
-				Name:        flagName,
-				Shorthand:   short,
-				Env:         envName,
-				Description: desc,
-			}
-
-			switch {
-			case info.Value.Kind() == reflect.Ptr && info.Value.IsNil():
-				stringFlag.DefaultValue = (*string)(nil)
-			case info.Value.Kind() == reflect.Ptr:
-				stringFlag.DefaultValue = common.Ptr(info.Processed.Interface().(string))
-			default:
-				stringFlag.DefaultValue = info.Processed.Interface().(string)
-			}
-
-			stringFlag.Add(v, f)
-			continue loop
+			f.StringP(flagName, short, info.Processed.Interface().(string), usage)
 		case reflect.Bool:
-			boolFlag := &BoolFlag{
-				ViperKey:    viperKey,
-				Name:        flagName,
-				Shorthand:   short,
-				Env:         envName,
-				Description: desc,
-			}
-
-			switch {
-			case info.Value.Kind() == reflect.Ptr && info.Value.IsNil():
-				boolFlag.DefaultValue = (*bool)(nil)
-			case info.Value.Kind() == reflect.Ptr:
-				boolFlag.DefaultValue = common.Ptr(info.Processed.Interface().(bool))
-			default:
-				boolFlag.DefaultValue = info.Processed.Interface().(bool)
-			}
-
-			boolFlag.Add(v, f)
-			continue loop
+			f.BoolP(flagName, short, info.Processed.Interface().(bool), usage)
 		case reflect.Int:
-			intFlag := &IntFlag{
-				ViperKey:    viperKey,
-				Name:        flagName,
-				Shorthand:   short,
-				Env:         envName,
-				Description: desc,
-			}
-
-			switch {
-			case info.Value.Kind() == reflect.Ptr && info.Value.IsNil():
-				intFlag.DefaultValue = (*int)(nil)
-			case info.Value.Kind() == reflect.Ptr:
-				intFlag.DefaultValue = common.Ptr(info.Processed.Interface().(int))
-			default:
-				intFlag.DefaultValue = info.Processed.Interface().(int)
-			}
-
-			intFlag.Add(v, f)
-			continue loop
-		case reflect.Array, reflect.Slice:
-			elemKind := typ.Elem().Kind()
+			f.IntP(flagName, short, info.Processed.Interface().(int), usage)
+		case reflect.Int8:
+			f.Int8P(flagName, short, info.Processed.Interface().(int8), usage)
+		case reflect.Int16:
+			f.Int16P(flagName, short, info.Processed.Interface().(int16), usage)
+		case reflect.Int32:
+			f.Int32P(flagName, short, info.Processed.Interface().(int32), usage)
+		case reflect.Int64:
+			f.Int64P(flagName, short, info.Processed.Interface().(int64), usage)
+		case reflect.Uint:
+			f.UintP(flagName, short, info.Processed.Interface().(uint), usage)
+		case reflect.Uint8:
+			f.Uint8P(flagName, short, info.Processed.Interface().(uint8), usage)
+		case reflect.Uint16:
+			f.Uint16P(flagName, short, info.Processed.Interface().(uint16), usage)
+		case reflect.Uint32:
+			f.Uint32P(flagName, short, info.Processed.Interface().(uint32), usage)
+		case reflect.Uint64:
+			f.Uint64P(flagName, short, info.Processed.Interface().(uint64), usage)
+		case reflect.Float32:
+			f.Float32P(flagName, short, info.Processed.Interface().(float32), usage)
+		case reflect.Float64:
+			f.Float64P(flagName, short, info.Processed.Interface().(float64), usage)
+		case reflect.Slice:
+			elemKind := getKind(info.Processed.Type().Elem().Kind())
 			switch elemKind {
+			case reflect.Bool:
+				f.BoolSliceP(flagName, short, info.Processed.Interface().([]bool), usage)
 			case reflect.String:
-				stringArrayFlag := (&StringArrayFlag{
-					ViperKey:    viperKey,
-					Name:        flagName,
-					Shorthand:   short,
-					Env:         envName,
-					Description: desc,
-				})
-
-				switch {
-				case info.Value.Kind() == reflect.Ptr && info.Value.IsNil():
-					stringArrayFlag.DefaultValue = (*[]string)(nil)
-				case info.Value.Kind() == reflect.Ptr:
-					defaultValue := make([]string, info.Processed.Len())
-					reflect.Copy(reflect.ValueOf(defaultValue), info.Processed)
-					stringArrayFlag.DefaultValue = common.Ptr(defaultValue)
-				default:
-					defaultValue := make([]string, info.Processed.Len())
-					reflect.Copy(reflect.ValueOf(defaultValue), info.Processed)
-					stringArrayFlag.DefaultValue = defaultValue
+				f.StringSliceP(flagName, short, info.Processed.Interface().([]string), usage)
+			case reflect.Uint:
+				slice := make([]uint, info.Processed.Len())
+				for i := range info.Processed.Len() {
+					slice[i] = uint(info.Processed.Index(i).Uint())
 				}
-
-				stringArrayFlag.Add(v, f)
-
-				continue loop
-			case reflect.Ptr:
-				if typ.Elem().Elem().Kind() == reflect.String {
-					stringArrayFlag := (&StringArrayFlag{
-						ViperKey:    viperKey,
-						Name:        flagName,
-						Shorthand:   short,
-						Env:         envName,
-						Description: desc,
-					})
-
-					switch {
-					case info.Value.Kind() == reflect.Ptr && info.Value.IsNil():
-						stringArrayFlag.DefaultValue = (*[]string)(nil)
-					case info.Value.Kind() == reflect.Ptr:
-						stringArrayFlag.DefaultValue = common.Ptr(common.ValSlice(info.Processed.Interface().([]*string)...))
-					default:
-						stringArrayFlag.DefaultValue = common.ValSlice(info.Processed.Interface().([]*string)...)
-					}
-
-					stringArrayFlag.Add(v, f)
-
-					continue loop
+				f.UintSliceP(flagName, short, slice, usage)
+			case reflect.Int:
+				slice := make([]int, info.Processed.Len())
+				for i := range info.Processed.Len() {
+					slice[i] = int(info.Processed.Index(i).Int())
 				}
+				f.IntSliceP(flagName, short, slice, usage)
+			case reflect.Float32:
+				slice := make([]float64, info.Processed.Len())
+				for i := range info.Processed.Len() {
+					slice[i] = info.Processed.Index(i).Float()
+				}
+				f.Float64SliceP(flagName, short, slice, usage)
+			default:
+				return fmt.Errorf("%v: unsupported slice element type %s", field, elemKind)
 			}
+		case reflect.Array:
+			value := reflect.MakeSlice(reflect.SliceOf(info.Processed.Type().Elem()), info.Processed.Len(), info.Processed.Len())
+			reflect.Copy(value, info.Processed)
+			elemKind := getKind(info.Processed.Type().Elem().Kind())
+			switch elemKind {
+			case reflect.Bool:
+				f.BoolSlice(flagName, value.Interface().([]bool), usage)
+			case reflect.String:
+				f.StringSlice(flagName, value.Interface().([]string), usage)
+			case reflect.Uint:
+				slice := make([]uint, info.Processed.Len())
+				for i := range info.Processed.Len() {
+					slice[i] = uint(info.Processed.Index(i).Uint())
+				}
+				f.UintSlice(flagName, slice, usage)
+			case reflect.Int:
+				slice := make([]int, info.Processed.Len())
+				for i := range info.Processed.Len() {
+					slice[i] = int(info.Processed.Index(i).Int())
+				}
+				f.IntSlice(flagName, slice, usage)
+			case reflect.Float32:
+				slice := make([]float64, info.Processed.Len())
+				for i := range info.Processed.Len() {
+					slice[i] = info.Processed.Index(i).Float()
+				}
+				f.Float64Slice(flagName, slice, usage)
+			default:
+				return fmt.Errorf("%v: unsupported array element type %s", field, elemKind)
+			}
+		default:
+			return fmt.Errorf("%v: unsupported type %s", field, info.Processed.Kind())
 		}
 
-		return fmt.Errorf("%s: unsupported type %s", field, typ)
+		_ = v.BindPFlag(viperKey, f.Lookup(flagName))
+		if envName != "" {
+			_ = v.BindEnv(viperKey, envName)
+		}
+		v.SetDefault(viperKey, info.Value.Interface())
 	}
 
 	return nil

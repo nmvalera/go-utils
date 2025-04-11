@@ -8,10 +8,10 @@ import (
 )
 
 var decodeHooks = []mapstructure.DecodeHookFunc{
-	mapstructure.StringToTimeDurationHookFunc(),
-	StringPtrToStringDecodeHookFunc(),
-	StringToWeakSliceDecodeHookFunc(envSliceSep),
 	NilStrToNilDecodeHookFunc(nilStr),
+	PtrToValueDecodeHookFunc(),
+	StringToWeakSliceDecodeHookFunc(envSliceSep),
+	mapstructure.StringToTimeDurationHookFunc(),
 }
 
 func RegisterGlobalDecodeHooks(hks ...mapstructure.DecodeHookFunc) {
@@ -42,7 +42,7 @@ func StringToWeakSliceDecodeHookFunc(sep string) mapstructure.DecodeHookFunc {
 	}
 }
 
-func StringPtrToStringDecodeHookFunc() mapstructure.DecodeHookFunc {
+func PtrToValueDecodeHookFunc() mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,
 		_ reflect.Type,
@@ -59,6 +59,9 @@ func StringPtrToStringDecodeHookFunc() mapstructure.DecodeHookFunc {
 			reflect.Int,
 			reflect.Uint,
 			reflect.Float32:
+			if reflect.ValueOf(data).Elem().IsZero() {
+				return data, nil
+			}
 			return reflect.ValueOf(data).Elem().Interface(), nil
 		}
 		return data, nil
