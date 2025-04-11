@@ -8,14 +8,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Flag interface {
-	Add(v *viper.Viper, f *pflag.FlagSet)
-}
-
-func AddFlag(v *viper.Viper, f *pflag.FlagSet, flag Flag) {
-	flag.Add(v, f)
-}
-
 type StringFlag struct {
 	ViperKey     string
 	Name         string
@@ -156,5 +148,21 @@ func (flag *IntFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 		_ = v.BindEnv(flag.ViperKey, flag.Env)
 	}
 
+	v.SetDefault(flag.ViperKey, flag.DefaultValue)
+}
+
+type Flag struct {
+	ViperKey     string
+	Env          string
+	Flag         *pflag.Flag
+	DefaultValue any
+}
+
+func (flag *Flag) Add(v *viper.Viper, f *pflag.FlagSet) {
+	f.AddFlag(flag.Flag)
+	_ = v.BindPFlag(flag.ViperKey, flag.Flag)
+	if flag.Env != "" {
+		_ = v.BindEnv(flag.ViperKey, flag.Env)
+	}
 	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
