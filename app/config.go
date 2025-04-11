@@ -25,8 +25,8 @@ func DefaultConfig() *Config {
 
 // Config is the configuration for the application.
 type Config struct {
-	MainEntrypoint    *kkrthttp.EntrypointConfig `key:"main-ep" env:"MAIN_EP" flag:"main-ep" desc:"Main entrypoint"`
-	HealthzEntrypoint *kkrthttp.EntrypointConfig `key:"healthz-ep" env:"HEALTHZ_EP" flag:"healthz-ep" desc:"Healthz entrypoint"`
+	MainEntrypoint    *kkrthttp.EntrypointConfig `key:"main-ep" env:"MAIN_EP" flag:"main-ep" desc:"main entrypoint: "`
+	HealthzEntrypoint *kkrthttp.EntrypointConfig `key:"healthz-ep" env:"HEALTHZ_EP" flag:"healthz-ep" desc:"healthz entrypoint: "`
 	Log               *log.Config                `key:"log"`
 	StartTimeout      *string                    `key:"start-timeout" env:"START_TIMEOUT" flag:"start-timeout" desc:"Start timeout"`
 	StopTimeout       *string                    `key:"stop-timeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
