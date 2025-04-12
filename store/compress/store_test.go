@@ -7,59 +7,69 @@ import (
 
 	store "github.com/kkrt-labs/go-utils/store"
 	"github.com/kkrt-labs/go-utils/store/memory"
+	"github.com/kkrt-labs/go-utils/store/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
 func TestStore(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	memStore := memory.New()
-
 	tests := []struct {
-		desc      string
-		encoding  store.ContentEncoding
-		key       string
-		data      []byte
-		headers   *store.Headers
-		expectErr bool
+		desc        string
+		encoding    store.ContentEncoding
+		key         string
+		expectedKey string
+		data        []byte
+		headers     *store.Headers
+		expectErr   bool
 	}{
 		{
-			desc:      "plain",
-			encoding:  store.ContentEncodingPlain,
-			key:       "plain",
-			data:      []byte("message to compress"),
-			expectErr: false,
+			desc:        "plain",
+			encoding:    store.ContentEncodingPlain,
+			key:         "test1",
+			expectedKey: "test1",
+			data:        []byte("message to compress"),
+			expectErr:   false,
 		},
 		{
-			desc:      "gzip",
-			encoding:  store.ContentEncodingGzip,
-			key:       "gzip",
-			data:      []byte("message to compress"),
-			expectErr: false,
+			desc:        "gzip",
+			encoding:    store.ContentEncodingGzip,
+			key:         "test2",
+			expectedKey: "test2.gz",
+			data:        []byte("message to compress"),
+			expectErr:   false,
 		},
 		{
-			desc:      "zlib",
-			encoding:  store.ContentEncodingZlib,
-			key:       "zlib",
-			data:      []byte("message to compress"),
-			expectErr: false,
+			desc:        "zlib",
+			encoding:    store.ContentEncodingZlib,
+			key:         "test3",
+			expectedKey: "test3.zlib",
+			data:        []byte("message to compress"),
+			expectErr:   false,
 		},
 		{
-			desc:     "flate",
-			encoding: store.ContentEncodingFlate,
-			key:      "flate",
-			data:     []byte("message to compress"),
+			desc:        "flate",
+			encoding:    store.ContentEncodingFlate,
+			key:         "test4",
+			expectedKey: "test4.flate",
+			data:        []byte("message to compress"),
+			expectErr:   false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			s, err := New(memStore, WithContentEncoding(tt.encoding))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			memStore := memory.New()
+			mockStore := mock.NewMockStore(ctrl)
+
+			s, err := New(mockStore, WithContentEncoding(tt.encoding))
 			require.NoError(t, err)
 			ctx := context.TODO()
+
+			mockStore.EXPECT().Store(ctx, tt.expectedKey, gomock.Any(), gomock.Any()).DoAndReturn(memStore.Store)
 
 			// Store the data
 			err = s.Store(ctx, tt.key, bytes.NewReader(tt.data), tt.headers)
@@ -70,7 +80,8 @@ func TestStore(t *testing.T) {
 			}
 
 			// Load the data
-			reader, err := s.Load(ctx, tt.key, tt.headers)
+			mockStore.EXPECT().Load(ctx, tt.expectedKey).DoAndReturn(memStore.Load)
+			reader, _, err := s.Load(ctx, tt.key)
 			require.NoError(t, err)
 
 			b := make([]byte, 512)

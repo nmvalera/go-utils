@@ -23,7 +23,7 @@ type Store interface {
 	// The key is the identifier for the object.
 	// The headers are optional metadata about the object.
 	// It is the responsibility of the caller to close the returned reader
-	Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error)
+	Load(ctx context.Context, key string) (io.ReadCloser, *Headers, error)
 }
 
 // Headers are optional metadata about an object to store/load
@@ -80,6 +80,28 @@ func (ct ContentType) String() string {
 	return contentTypeStrings[ct]
 }
 
+var contentTypeFileExtensions = map[ContentType]string{
+	ContentTypeText:     "",
+	ContentTypeJSON:     "json",
+	ContentTypeProtobuf: "protobuf",
+}
+
+func (ct ContentType) FileExtension() string {
+	ext, ok := contentTypeFileExtensions[ct]
+	if !ok {
+		return ""
+	}
+	return ext
+}
+
+func (ct ContentType) FilePath(key string) string {
+	ext := ct.FileExtension()
+	if ext == "" {
+		return key
+	}
+	return fmt.Sprintf("%s.%s", key, ext)
+}
+
 var contentTypes = map[string]ContentType{
 	contentTypeStrings[ContentTypeJSON]:     ContentTypeJSON,
 	contentTypeStrings[ContentTypeProtobuf]: ContentTypeProtobuf,
@@ -120,6 +142,29 @@ func (ce ContentEncoding) String() string {
 		return unknown
 	}
 	return contentEncodingStrings[ce]
+}
+
+var contentEncodingFileExtensions = map[ContentEncoding]string{
+	ContentEncodingPlain: "",
+	ContentEncodingGzip:  "gz",
+	ContentEncodingZlib:  "zlib",
+	ContentEncodingFlate: "flate",
+}
+
+func (ce ContentEncoding) FileExtension() string {
+	ext, ok := contentEncodingFileExtensions[ce]
+	if !ok {
+		return ""
+	}
+	return ext
+}
+
+func (ce ContentEncoding) FilePath(key string) string {
+	ext := ce.FileExtension()
+	if ext == "" {
+		return key
+	}
+	return fmt.Sprintf("%s.%s", key, ext)
 }
 
 func ParseContentEncoding(compression string) (ContentEncoding, error) {

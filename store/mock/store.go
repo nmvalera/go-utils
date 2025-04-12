@@ -43,18 +43,19 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 }
 
 // Load mocks base method.
-func (m *MockStore) Load(ctx context.Context, key string, headers *store.Headers) (io.ReadCloser, error) {
+func (m *MockStore) Load(ctx context.Context, key string) (io.ReadCloser, *store.Headers, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Load", ctx, key, headers)
+	ret := m.ctrl.Call(m, "Load", ctx, key)
 	ret0, _ := ret[0].(io.ReadCloser)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(*store.Headers)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // Load indicates an expected call of Load.
-func (mr *MockStoreMockRecorder) Load(ctx, key, headers any) *gomock.Call {
+func (mr *MockStoreMockRecorder) Load(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Load", reflect.TypeOf((*MockStore)(nil).Load), ctx, key, headers)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Load", reflect.TypeOf((*MockStore)(nil).Load), ctx, key)
 }
 
 // Store mocks base method.

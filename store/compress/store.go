@@ -94,42 +94,46 @@ func (c *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 	}
 	headers.ContentEncoding = c.contentEncoding
 
-	return c.store.Store(ctx, key, compressedReader, headers)
+	return c.store.Store(ctx, c.key(key), compressedReader, headers)
 }
 
 // Load loads the data from the store
 // It is the responsibility of the caller to close the returned reader
-func (c *Store) Load(ctx context.Context, key string, headers *store.Headers) (io.ReadCloser, error) {
+func (c *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Headers, error) {
+	reader, headers, err := c.store.Load(ctx, c.key(key))
+	if err != nil {
+		return nil, nil, err
+	}
+
 	if headers == nil {
 		headers = &store.Headers{}
 	}
 	headers.ContentEncoding = c.contentEncoding
 
-	reader, err := c.store.Load(ctx, key, headers)
-	if err != nil {
-		return nil, err
-	}
-
 	switch c.contentEncoding {
 	case store.ContentEncodingPlain:
-		return reader, nil
+		return reader, headers, nil
 	case store.ContentEncodingGzip:
 		r, err := gzip.NewReader(reader)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decompress with gzip: %w", err)
+			return nil, nil, fmt.Errorf("failed to decompress with gzip: %w", err)
 		}
-		return r, nil
+		return r, headers, nil
 	case store.ContentEncodingZlib:
 		r, err := zlib.NewReader(reader)
 		if err != nil {
-			return nil, fmt.Errorf("failed to decompress with zlib: %w", err)
+			return nil, nil, fmt.Errorf("failed to decompress with zlib: %w", err)
 		}
-		return r, nil
+		return r, headers, nil
 	case store.ContentEncodingFlate:
-		return flate.NewReader(reader), nil
+		return flate.NewReader(reader), headers, nil
 	default:
-		return nil, fmt.Errorf("unsupported content encoding: %s", c.contentEncoding)
+		return nil, nil, fmt.Errorf("unsupported content encoding: %s", c.contentEncoding)
 	}
+}
+
+func (c *Store) key(key string) string {
+	return c.contentEncoding.FilePath(key)
 }
 
 func WithContentEncoding(encoding store.ContentEncoding) Options {

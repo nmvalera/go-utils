@@ -16,7 +16,7 @@ func TestStoreAndLoad(t *testing.T) {
 	err := store.Store(context.Background(), "test", bytes.NewReader([]byte("test")), nil)
 	require.NoError(t, err)
 
-	reader, err := store.Load(context.Background(), "test", nil)
+	reader, _, err := store.Load(context.Background(), "test")
 	require.NoError(t, err)
 
 	data, err := io.ReadAll(reader)

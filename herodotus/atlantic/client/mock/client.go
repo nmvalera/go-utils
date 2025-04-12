@@ -17,7 +17,6 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-
 // MockClient is a mock of Client interface.
 type MockClient struct {
 	ctrl     *gomock.Controller
