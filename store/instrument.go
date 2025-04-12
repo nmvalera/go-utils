@@ -26,8 +26,8 @@ func (s *taggable) Store(ctx context.Context, key string, reader io.Reader, head
 	return s.store.Store(s.context(ctx, key, headers), key, reader, headers)
 }
 
-func (s *taggable) Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error) {
-	return s.store.Load(s.context(ctx, key, headers), key, headers)
+func (s *taggable) Load(ctx context.Context, key string) (io.ReadCloser, *Headers, error) {
+	return s.store.Load(s.context(ctx, key, nil), key)
 }
 
 func (s *taggable) context(ctx context.Context, key string, headers *Headers) context.Context {
@@ -35,19 +35,15 @@ func (s *taggable) context(ctx context.Context, key string, headers *Headers) co
 		tag.Key("store.key").String(key),
 	}
 
-	var (
-		ct ContentType
-		ce ContentEncoding
-	)
 	if headers != nil {
-		ct = headers.ContentType
-		ce = headers.ContentEncoding
+		ct := headers.ContentType
+		ce := headers.ContentEncoding
+		tags = append(
+			tags,
+			tag.Key("store.content-type").String(ct.String()),
+			tag.Key("store.content-encoding").String(ce.String()),
+		)
 	}
-	tags = append(
-		tags,
-		tag.Key("store.content-type").String(ct.String()),
-		tag.Key("store.content-encoding").String(ce.String()),
-	)
 
 	return s.Context(ctx, tags...)
 }
@@ -122,9 +118,9 @@ func (m *metrics) Store(ctx context.Context, key string, reader io.Reader, heade
 	return err
 }
 
-func (m *metrics) Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error) {
+func (m *metrics) Load(ctx context.Context, key string) (io.ReadCloser, *Headers, error) {
 	start := time.Now()
-	reader, err := m.store.Load(ctx, key, headers)
+	reader, headers, err := m.store.Load(ctx, key)
 	duration := time.Since(start)
 	m.loadDuration.Observe(duration.Seconds())
 	if err != nil {
@@ -132,7 +128,7 @@ func (m *metrics) Load(ctx context.Context, key string, headers *Headers) (io.Re
 	} else {
 		m.loadCount.Inc()
 	}
-	return reader, err
+	return reader, headers, err
 }
 
 func (m *metrics) Describe(ch chan<- *prometheus.Desc) {
@@ -171,12 +167,12 @@ func (l *loggable) Store(ctx context.Context, key string, reader io.Reader, head
 	return err
 }
 
-func (l *loggable) Load(ctx context.Context, key string, headers *Headers) (io.ReadCloser, error) {
+func (l *loggable) Load(ctx context.Context, key string) (io.ReadCloser, *Headers, error) {
 	logger := log.LoggerFromContext(ctx)
 	logger.Debug("Load store object")
-	reader, err := l.store.Load(ctx, key, headers)
+	reader, headers, err := l.store.Load(ctx, key)
 	if err != nil {
 		logger.Error("Failed to load store object", zap.Error(err))
 	}
-	return reader, err
+	return reader, headers, err
 }

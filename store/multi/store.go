@@ -29,15 +29,15 @@ func (m *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 // Load loads the data from the first store that doesn't return an error
 // If all stores return an error, it returns all errors as a multierr error
 // It is the responsibility of the caller to close the returned reader
-func (m *Store) Load(ctx context.Context, key string, headers *store.Headers) (io.ReadCloser, error) {
+func (m *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Headers, error) {
 	// Try stores in order until we find the data or encounter an error
 	errors := make([]error, 0, len(m.stores))
 	for _, s := range m.stores {
-		reader, err := s.Load(ctx, key, headers)
+		reader, headers, err := s.Load(ctx, key)
 		if err == nil {
-			return reader, nil
+			return reader, headers, nil
 		}
 		errors = append(errors, err)
 	}
-	return nil, multierr.Combine(errors...)
+	return nil, nil, multierr.Combine(errors...)
 }

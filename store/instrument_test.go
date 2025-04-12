@@ -74,11 +74,11 @@ func TestWithMetrics(t *testing.T) {
 	err := metricsStore.Store(ctx, "test-key", reader, headers)
 	require.NoError(t, err)
 
-	mockStore.EXPECT().Load(ctx, "test-key", headers).Return(reader, nil)
-	resReader, err := metricsStore.Load(ctx, "test-key", headers)
+	mockStore.EXPECT().Load(ctx, "test-key").Return(reader, headers, nil)
+	resReader, resHeaders, err := metricsStore.Load(ctx, "test-key")
 	require.NoError(t, err)
 	require.Equal(t, reader, resReader)
-
+	require.Equal(t, headers, resHeaders)
 	ch := make(chan *prometheus.Desc)
 	go func() {
 		metricsStore.(svc.MetricsCollector).Describe(ch)
@@ -130,8 +130,9 @@ func TestWithLog(t *testing.T) {
 	err := logStore.Store(ctx, "test-key", reader, headers)
 	require.NoError(t, err)
 
-	mockStore.EXPECT().Load(ctx, "test-key", headers).Return(reader, nil)
-	resReader, err := logStore.Load(ctx, "test-key", headers)
+	mockStore.EXPECT().Load(ctx, "test-key").Return(reader, headers, nil)
+	resReader, resHeaders, err := logStore.Load(ctx, "test-key")
 	require.NoError(t, err)
 	require.Equal(t, reader, resReader)
+	require.Equal(t, headers, resHeaders)
 }

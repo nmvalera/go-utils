@@ -68,16 +68,30 @@ func (s *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 
 // Load loads the data from the S3 bucket
 // It is the responsibility of the caller to close the returned reader
-func (s *Store) Load(ctx context.Context, key string, _ *store.Headers) (io.ReadCloser, error) {
+func (s *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Headers, error) {
 	output, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &s.bucket,
 		Key:    common.Ptr(s.path(key)),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return output.Body, nil
+	headers := &store.Headers{}
+
+	if output.ContentType != nil {
+		headers.ContentType, _ = store.ParseContentType(*output.ContentType)
+	}
+
+	if output.ContentEncoding != nil {
+		headers.ContentEncoding, _ = store.ParseContentEncoding(*output.ContentEncoding)
+	}
+
+	if output.Metadata != nil {
+		headers.KeyValue = output.Metadata
+	}
+
+	return output.Body, headers, nil
 }
 
 func (s *Store) path(key string) string {

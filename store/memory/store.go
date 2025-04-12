@@ -31,11 +31,11 @@ func (s *Store) Store(_ context.Context, key string, reader io.Reader, _ *store.
 }
 
 // Load loads the data from the memory store
-func (s *Store) Load(_ context.Context, key string, _ *store.Headers) (io.ReadCloser, error) {
+func (s *Store) Load(_ context.Context, key string) (io.ReadCloser, *store.Headers, error) {
 	data, ok := s.data[key]
 	if !ok {
-		return nil, fmt.Errorf("key not found")
+		return nil, nil, fmt.Errorf("key not found")
 	}
 
-	return io.NopCloser(bytes.NewReader(data)), nil
+	return io.NopCloser(bytes.NewReader(data)), nil, nil
 }
