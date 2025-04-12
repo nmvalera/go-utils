@@ -166,6 +166,10 @@ func (app *App) getLogger(component string) *zap.Logger {
 	return app.logger.With(zap.String("component", component))
 }
 
+func (app *App) Context(ctx context.Context) context.Context {
+	return app.context(ctx)
+}
+
 func (app *App) context(ctx context.Context) context.Context {
 	return log.WithLogger(ctx, app.logger)
 }
