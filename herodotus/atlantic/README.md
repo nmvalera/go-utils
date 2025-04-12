@@ -178,4 +178,4 @@ For detailed API documentation, visit:
 
 ## Contributing
 
-Interested in contributing? Check out our [Contributing Guidelines](../../CONTRIBUTING.md) to get started! 
+Interested in contributing? Check out our [Contributing Guidelines](../CONTRIBUTING.md) to get started! 
