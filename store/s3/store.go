@@ -6,12 +6,14 @@ import (
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/kkrt-labs/go-utils/aws"
 	"github.com/kkrt-labs/go-utils/common"
 	"github.com/kkrt-labs/go-utils/store"
 )
 
+// Store is a store that uses S3 as the underlying storage.
 type Store struct {
-	client *s3.Client
+	client aws.S3ObjectClient
 
 	bucket    string
 	keyPrefix string
@@ -19,7 +21,7 @@ type Store struct {
 
 type Options func(*Store) error
 
-func New(s3c *s3.Client, bucket string, opts ...Options) (store.Store, error) {
+func New(s3c aws.S3ObjectClient, bucket string, opts ...Options) (store.Store, error) {
 	s := &Store{
 		client: s3c,
 		bucket: bucket,
