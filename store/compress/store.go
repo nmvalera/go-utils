@@ -132,6 +132,14 @@ func (c *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Hea
 	}
 }
 
+func (c *Store) Delete(ctx context.Context, key string) error {
+	return c.store.Delete(ctx, c.key(key))
+}
+
+func (c *Store) Copy(ctx context.Context, srcKey, dstKey string) error {
+	return c.store.Copy(ctx, c.key(srcKey), c.key(dstKey))
+}
+
 func (c *Store) key(key string) string {
 	return c.contentEncoding.FilePath(key)
 }

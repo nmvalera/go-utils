@@ -7,9 +7,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kkrt-labs/go-utils/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestImplementsStore(t *testing.T) {
+	assert.Implements(t, (*store.Store)(nil), new(Store))
+}
 
 func TestFileStore(t *testing.T) {
 	dataDir := t.TempDir()
