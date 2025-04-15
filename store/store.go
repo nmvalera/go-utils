@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -24,7 +25,15 @@ type Store interface {
 	// The headers are optional metadata about the object.
 	// It is the responsibility of the caller to close the returned reader
 	Load(ctx context.Context, key string) (io.ReadCloser, *Headers, error)
+
+	// Delete deletes an object from the store.
+	Delete(ctx context.Context, key string) error
+
+	// Copy copies an object from one store to another.
+	Copy(ctx context.Context, srcKey, dstKey string) error
 }
+
+var ErrNotFound = errors.New("not found")
 
 // Headers are optional metadata about an object to store/load
 type Headers struct {

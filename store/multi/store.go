@@ -18,12 +18,13 @@ func New(stores ...store.Store) store.Store {
 
 // Store stores the data in all stores (if one store returns an error, it will continue to the next store)
 func (m *Store) Store(ctx context.Context, key string, reader io.Reader, headers *store.Headers) error {
+	errors := make([]error, 0, len(m.stores))
 	for _, s := range m.stores {
 		if err := s.Store(ctx, key, reader, headers); err != nil {
-			return err
+			errors = append(errors, err)
 		}
 	}
-	return nil
+	return multierr.Combine(errors...)
 }
 
 // Load loads the data from the first store that doesn't return an error
@@ -40,4 +41,24 @@ func (m *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Hea
 		errors = append(errors, err)
 	}
 	return nil, nil, multierr.Combine(errors...)
+}
+
+func (m *Store) Copy(ctx context.Context, srcKey, dstKey string) error {
+	errors := make([]error, 0, len(m.stores))
+	for _, s := range m.stores {
+		if err := s.Copy(ctx, srcKey, dstKey); err != nil {
+			errors = append(errors, err)
+		}
+	}
+	return multierr.Combine(errors...)
+}
+
+func (m *Store) Delete(ctx context.Context, key string) error {
+	errors := make([]error, 0, len(m.stores))
+	for _, s := range m.stores {
+		if err := s.Delete(ctx, key); err != nil {
+			errors = append(errors, err)
+		}
+	}
+	return multierr.Combine(errors...)
 }
