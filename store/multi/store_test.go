@@ -7,10 +7,15 @@ import (
 	"io"
 	"testing"
 
+	store "github.com/kkrt-labs/go-utils/store"
 	"github.com/kkrt-labs/go-utils/store/mock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
+
+func TestImplementsStore(t *testing.T) {
+	assert.Implements(t, (*store.Store)(nil), new(Store))
+}
 
 // use mock store to test
 func TestMultiStoreMock(t *testing.T) {

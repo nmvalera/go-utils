@@ -16,6 +16,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func TestImplementsStore(t *testing.T) {
+	assert.Implements(t, (*store.Store)(nil), new(Store))
+}
+
 func TestStore(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

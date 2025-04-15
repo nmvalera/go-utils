@@ -13,6 +13,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+func TestImplementsStore(t *testing.T) {
+	assert.Implements(t, (*store.Store)(nil), new(Store))
+}
+
 func TestStore(t *testing.T) {
 	tests := []struct {
 		desc        string
