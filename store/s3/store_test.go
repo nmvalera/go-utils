@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -96,5 +97,34 @@ func TestStore(t *testing.T) {
 		b, err := io.ReadAll(body)
 		require.NoError(t, err)
 		assert.Equal(t, "test-data-load", string(b))
+	})
+
+	t.Run("Copy", func(t *testing.T) {
+		mockS3Client.EXPECT().CopyObject(
+			ctx,
+			gomock.Cond(func(obj *s3.CopyObjectInput) bool {
+				match := obj.Bucket != nil && *obj.Bucket == testBucketName
+				match = match && obj.Key != nil && *obj.Key == "test-prefix/test-key-copy"
+				match = match && obj.CopySource != nil && *obj.CopySource == fmt.Sprintf("%s/test-prefix/test-key-copy", testBucketName)
+				return match
+			}),
+		).Return(nil, nil)
+
+		err = s3Store.Copy(ctx, "test-key-copy", "test-key-copy")
+		assert.NoError(t, err)
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		mockS3Client.EXPECT().DeleteObject(
+			ctx,
+			gomock.Cond(func(obj *s3.DeleteObjectInput) bool {
+				match := obj.Bucket != nil && *obj.Bucket == testBucketName
+				match = match && obj.Key != nil && *obj.Key == "test-prefix/test-key-delete"
+				return match
+			}),
+		).Return(nil, nil)
+
+		err = s3Store.Delete(ctx, "test-key-delete")
+		assert.NoError(t, err)
 	})
 }

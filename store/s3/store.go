@@ -2,10 +2,13 @@ package s3
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/smithy-go"
 	"github.com/kkrt-labs/go-utils/aws"
 	"github.com/kkrt-labs/go-utils/common"
 	"github.com/kkrt-labs/go-utils/store"
@@ -39,7 +42,7 @@ func New(s3c aws.S3ObjectClient, bucket string, opts ...Options) (store.Store, e
 // Store stores the data in the S3 bucket
 func (s *Store) Store(ctx context.Context, key string, reader io.Reader, headers *store.Headers) error {
 	input := &s3.PutObjectInput{
-		Bucket: &s.bucket,
+		Bucket: common.Ptr(s.bucket),
 		Key:    common.Ptr(s.path(key)),
 		Body:   reader,
 	}
@@ -72,10 +75,14 @@ func (s *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 // It is the responsibility of the caller to close the returned reader
 func (s *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Headers, error) {
 	output, err := s.client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &s.bucket,
+		Bucket: common.Ptr(s.bucket),
 		Key:    common.Ptr(s.path(key)),
 	})
 	if err != nil {
+		var aerr smithy.APIError
+		if errors.As(err, &aerr) && aerr.ErrorCode() == "NoSuchKey" {
+			return nil, nil, store.ErrNotFound
+		}
 		return nil, nil, err
 	}
 
@@ -94,6 +101,27 @@ func (s *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Hea
 	}
 
 	return output.Body, headers, nil
+}
+
+// Copy copies an object from one key to another
+func (s *Store) Copy(ctx context.Context, srcKey, dstKey string) error {
+	_, err := s.client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     common.Ptr(s.bucket),
+		Key:        common.Ptr(s.path(dstKey)),
+		CopySource: common.Ptr(fmt.Sprintf("%s/%s", s.bucket, s.path(srcKey))),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) Delete(ctx context.Context, key string) error {
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: common.Ptr(s.bucket),
+		Key:    common.Ptr(s.path(key)),
+	})
+	return err
 }
 
 func (s *Store) path(key string) string {

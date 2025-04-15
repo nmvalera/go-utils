@@ -16,12 +16,14 @@ func TestFileStore(t *testing.T) {
 	s := New(dataDir)
 
 	tests := []struct {
-		desc string
-		key  string
-		data string
+		desc    string
+		key     string
+		keyCopy string
+		data    string
 
-		expectedErr  bool
-		expectedPath string
+		expectedErr      bool
+		expectedPath     string
+		expectedPathCopy string
 	}{
 		{
 			desc:         "Simple key and no headers",
@@ -58,6 +60,15 @@ func TestFileStore(t *testing.T) {
 			expectedErr:  false,
 			expectedPath: "test5.json.gz",
 		},
+		{
+			desc:             "Copy",
+			key:              "test1",
+			keyCopy:          "test1-copy",
+			data:             "test#1",
+			expectedErr:      false,
+			expectedPath:     "test1",
+			expectedPathCopy: "test1-copy",
+		},
 	}
 
 	for _, tt := range tests {
@@ -79,6 +90,32 @@ func TestFileStore(t *testing.T) {
 			content, err := io.ReadAll(reader)
 			require.NoError(t, err)
 			assert.Equal(t, tt.data, string(content))
+
+			if tt.expectedPathCopy != "" {
+				err = s.Copy(context.Background(), tt.key, tt.keyCopy)
+				require.NoError(t, err)
+
+				assert.FileExists(t, filepath.Join(dataDir, tt.expectedPathCopy))
+
+				reader, _, err := s.Load(context.Background(), tt.keyCopy)
+				require.NoError(t, err)
+
+				defer reader.Close()
+
+				content, err := io.ReadAll(reader)
+				require.NoError(t, err)
+				assert.Equal(t, tt.data, string(content))
+
+				err = s.Delete(context.Background(), tt.keyCopy)
+				require.NoError(t, err)
+
+				assert.NoFileExists(t, filepath.Join(dataDir, tt.expectedPathCopy))
+			}
+
+			err = s.Delete(context.Background(), tt.key)
+			require.NoError(t, err)
+
+			assert.NoFileExists(t, filepath.Join(dataDir, tt.expectedPath))
 		})
 	}
 }

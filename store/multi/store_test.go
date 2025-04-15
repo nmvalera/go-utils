@@ -24,33 +24,56 @@ func TestMultiStoreMock(t *testing.T) {
 	// Create a multiStore with the mock stores
 	multiStore := New(mockStore1, mockStore2)
 
-	// 1. Store
-	ctx := context.TODO()
-	mockStore1.EXPECT().Store(ctx, "test", gomock.Any(), gomock.Any()).Return(nil)
-	mockStore2.EXPECT().Store(ctx, "test", gomock.Any(), gomock.Any()).Return(nil)
+	t.Run("Store", func(t *testing.T) {
+		ctx := context.TODO()
+		mockStore1.EXPECT().Store(ctx, "test", gomock.Any(), gomock.Any()).Return(nil)
+		mockStore2.EXPECT().Store(ctx, "test", gomock.Any(), gomock.Any()).Return(nil)
 
-	err := multiStore.Store(ctx, "test", bytes.NewReader([]byte("test-store")), nil)
-	assert.NoError(t, err)
+		err := multiStore.Store(ctx, "test", bytes.NewReader([]byte("test-store")), nil)
+		assert.NoError(t, err)
+	})
 
-	// 2. Load
-	// 2.A mockStore1 returns no error
-	mockStore1.EXPECT().Load(ctx, "test").Return(io.NopCloser(bytes.NewReader([]byte("test-load"))), nil, nil)
+	t.Run("Load#Store1 returns", func(t *testing.T) {
+		ctx := context.TODO()
+		mockStore1.EXPECT().Load(ctx, "test").Return(io.NopCloser(bytes.NewReader([]byte("test-load"))), nil, nil)
 
-	reader, _, err := multiStore.Load(context.TODO(), "test")
-	assert.NoError(t, err)
+		reader, _, err := multiStore.Load(ctx, "test")
+		assert.NoError(t, err)
 
-	body, err := io.ReadAll(reader)
-	assert.NoError(t, err)
-	assert.Equal(t, "test-load", string(body))
+		body, err := io.ReadAll(reader)
+		assert.NoError(t, err)
+		assert.Equal(t, "test-load", string(body))
+	})
 
 	// 2.B mockStore1 returns an error
-	mockStore1.EXPECT().Load(ctx, "test").Return(nil, nil, errors.New("test-error"))
-	mockStore2.EXPECT().Load(ctx, "test").Return(io.NopCloser(bytes.NewReader([]byte("test-load-2"))), nil, nil)
+	t.Run("Load#Store1 returns an error", func(t *testing.T) {
+		ctx := context.TODO()
+		mockStore1.EXPECT().Load(ctx, "test").Return(nil, nil, errors.New("test-error"))
+		mockStore2.EXPECT().Load(ctx, "test").Return(io.NopCloser(bytes.NewReader([]byte("test-load-2"))), nil, nil)
 
-	reader, _, err = multiStore.Load(context.TODO(), "test")
-	assert.NoError(t, err)
+		reader, _, err := multiStore.Load(context.TODO(), "test")
+		assert.NoError(t, err)
 
-	body, err = io.ReadAll(reader)
-	assert.NoError(t, err)
-	assert.Equal(t, "test-load-2", string(body))
+		body, err := io.ReadAll(reader)
+		assert.NoError(t, err)
+		assert.Equal(t, "test-load-2", string(body))
+	})
+
+	t.Run("Copy", func(t *testing.T) {
+		ctx := context.TODO()
+		mockStore1.EXPECT().Copy(ctx, "test", "test").Return(nil)
+		mockStore2.EXPECT().Copy(ctx, "test", "test").Return(nil)
+
+		err := multiStore.Copy(ctx, "test", "test")
+		assert.NoError(t, err)
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		ctx := context.TODO()
+		mockStore1.EXPECT().Delete(ctx, "test").Return(nil)
+		mockStore2.EXPECT().Delete(ctx, "test").Return(nil)
+
+		err := multiStore.Delete(ctx, "test")
+		assert.NoError(t, err)
+	})
 }
