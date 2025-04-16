@@ -35,12 +35,19 @@ func (m *Store) Load(ctx context.Context, key string) (io.ReadCloser, *store.Hea
 	errors := make([]error, 0, len(m.stores))
 	for _, s := range m.stores {
 		reader, headers, err := s.Load(ctx, key)
-		if err == nil {
+		if err == nil && reader != nil {
 			return reader, headers, nil
 		}
+
 		errors = append(errors, err)
 	}
-	return nil, nil, multierr.Combine(errors...)
+
+	err := multierr.Combine(errors...)
+	if err == nil {
+		return nil, nil, store.ErrNotFound
+	}
+
+	return nil, nil, err
 }
 
 func (m *Store) Copy(ctx context.Context, srcKey, dstKey string) error {
