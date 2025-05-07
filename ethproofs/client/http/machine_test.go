@@ -30,9 +30,9 @@ func TestCreateMachine(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	req := &ethproofs.CreateMachineRequest{
-		Nickname:     "test-machine",
-		InstanceType: "t3.small",
+	req := &ethproofs.CreateSingleMachineRequest{
+		Nickname:          "test-machine",
+		CloudInstanceName: "t3.small",
 	}
 
 	resp, err := client.CreateMachine(context.Background(), req)

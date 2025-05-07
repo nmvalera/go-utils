@@ -57,7 +57,7 @@ func (mr *MockClientMockRecorder) CreateCluster(ctx, req any) *gomock.Call {
 }
 
 // CreateMachine mocks base method.
-func (m *MockClient) CreateMachine(ctx context.Context, req *ethproofs.CreateMachineRequest) (*ethproofs.CreateMachineResponse, error) {
+func (m *MockClient) CreateMachine(ctx context.Context, req *ethproofs.Machine) (*ethproofs.CreateMachineResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateMachine", ctx, req)
 	ret0, _ := ret[0].(*ethproofs.CreateMachineResponse)
@@ -71,19 +71,19 @@ func (mr *MockClientMockRecorder) CreateMachine(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMachine", reflect.TypeOf((*MockClient)(nil).CreateMachine), ctx, req)
 }
 
-// ListAWSPricing mocks base method.
-func (m *MockClient) ListAWSPricing(ctx context.Context) ([]ethproofs.AWSInstance, error) {
+// ListCloudInstances mocks base method.
+func (m *MockClient) ListCloudInstances(ctx context.Context) ([]ethproofs.CloudInstance, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAWSPricing", ctx)
-	ret0, _ := ret[0].([]ethproofs.AWSInstance)
+	ret := m.ctrl.Call(m, "ListCloudInstances", ctx)
+	ret0, _ := ret[0].([]ethproofs.CloudInstance)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListAWSPricing indicates an expected call of ListAWSPricing.
-func (mr *MockClientMockRecorder) ListAWSPricing(ctx any) *gomock.Call {
+// ListCloudInstances indicates an expected call of ListCloudInstances.
+func (mr *MockClientMockRecorder) ListCloudInstances(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAWSPricing", reflect.TypeOf((*MockClient)(nil).ListAWSPricing), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCloudInstances", reflect.TypeOf((*MockClient)(nil).ListCloudInstances), ctx)
 }
 
 // ListClusters mocks base method.
@@ -102,10 +102,10 @@ func (mr *MockClientMockRecorder) ListClusters(ctx any) *gomock.Call {
 }
 
 // QueueProof mocks base method.
-func (m *MockClient) QueueProof(ctx context.Context, req *ethproofs.QueueProofRequest) (*ethproofs.ProofResponse, error) {
+func (m *MockClient) QueueProof(ctx context.Context, req *ethproofs.QueueProofRequest) (*ethproofs.Proof, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueueProof", ctx, req)
-	ret0, _ := ret[0].(*ethproofs.ProofResponse)
+	ret0, _ := ret[0].(*ethproofs.Proof)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -117,10 +117,10 @@ func (mr *MockClientMockRecorder) QueueProof(ctx, req any) *gomock.Call {
 }
 
 // StartProving mocks base method.
-func (m *MockClient) StartProving(ctx context.Context, req *ethproofs.StartProvingRequest) (*ethproofs.ProofResponse, error) {
+func (m *MockClient) StartProving(ctx context.Context, req *ethproofs.StartProvingRequest) (*ethproofs.Proof, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StartProving", ctx, req)
-	ret0, _ := ret[0].(*ethproofs.ProofResponse)
+	ret0, _ := ret[0].(*ethproofs.Proof)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -132,10 +132,10 @@ func (mr *MockClientMockRecorder) StartProving(ctx, req any) *gomock.Call {
 }
 
 // SubmitProof mocks base method.
-func (m *MockClient) SubmitProof(ctx context.Context, req *ethproofs.SubmitProofRequest) (*ethproofs.ProofResponse, error) {
+func (m *MockClient) SubmitProof(ctx context.Context, req *ethproofs.SubmitProofRequest) (*ethproofs.Proof, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SubmitProof", ctx, req)
-	ret0, _ := ret[0].(*ethproofs.ProofResponse)
+	ret0, _ := ret[0].(*ethproofs.Proof)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -144,4 +144,205 @@ func (m *MockClient) SubmitProof(ctx context.Context, req *ethproofs.SubmitProof
 func (mr *MockClientMockRecorder) SubmitProof(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitProof", reflect.TypeOf((*MockClient)(nil).SubmitProof), ctx, req)
+}
+
+// MockClustersClient is a mock of ClustersClient interface.
+type MockClustersClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockClustersClientMockRecorder
+	isgomock struct{}
+}
+
+// MockClustersClientMockRecorder is the mock recorder for MockClustersClient.
+type MockClustersClientMockRecorder struct {
+	mock *MockClustersClient
+}
+
+// NewMockClustersClient creates a new mock instance.
+func NewMockClustersClient(ctrl *gomock.Controller) *MockClustersClient {
+	mock := &MockClustersClient{ctrl: ctrl}
+	mock.recorder = &MockClustersClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockClustersClient) EXPECT() *MockClustersClientMockRecorder {
+	return m.recorder
+}
+
+// CreateCluster mocks base method.
+func (m *MockClustersClient) CreateCluster(ctx context.Context, req *ethproofs.CreateClusterRequest) (*ethproofs.CreateClusterResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateCluster", ctx, req)
+	ret0, _ := ret[0].(*ethproofs.CreateClusterResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateCluster indicates an expected call of CreateCluster.
+func (mr *MockClustersClientMockRecorder) CreateCluster(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCluster", reflect.TypeOf((*MockClustersClient)(nil).CreateCluster), ctx, req)
+}
+
+// ListClusters mocks base method.
+func (m *MockClustersClient) ListClusters(ctx context.Context) ([]ethproofs.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListClusters", ctx)
+	ret0, _ := ret[0].([]ethproofs.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListClusters indicates an expected call of ListClusters.
+func (mr *MockClustersClientMockRecorder) ListClusters(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListClusters", reflect.TypeOf((*MockClustersClient)(nil).ListClusters), ctx)
+}
+
+// MockProofsClient is a mock of ProofsClient interface.
+type MockProofsClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockProofsClientMockRecorder
+	isgomock struct{}
+}
+
+// MockProofsClientMockRecorder is the mock recorder for MockProofsClient.
+type MockProofsClientMockRecorder struct {
+	mock *MockProofsClient
+}
+
+// NewMockProofsClient creates a new mock instance.
+func NewMockProofsClient(ctrl *gomock.Controller) *MockProofsClient {
+	mock := &MockProofsClient{ctrl: ctrl}
+	mock.recorder = &MockProofsClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockProofsClient) EXPECT() *MockProofsClientMockRecorder {
+	return m.recorder
+}
+
+// QueueProof mocks base method.
+func (m *MockProofsClient) QueueProof(ctx context.Context, req *ethproofs.QueueProofRequest) (*ethproofs.Proof, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueueProof", ctx, req)
+	ret0, _ := ret[0].(*ethproofs.Proof)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueueProof indicates an expected call of QueueProof.
+func (mr *MockProofsClientMockRecorder) QueueProof(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueueProof", reflect.TypeOf((*MockProofsClient)(nil).QueueProof), ctx, req)
+}
+
+// StartProving mocks base method.
+func (m *MockProofsClient) StartProving(ctx context.Context, req *ethproofs.StartProvingRequest) (*ethproofs.Proof, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StartProving", ctx, req)
+	ret0, _ := ret[0].(*ethproofs.Proof)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StartProving indicates an expected call of StartProving.
+func (mr *MockProofsClientMockRecorder) StartProving(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartProving", reflect.TypeOf((*MockProofsClient)(nil).StartProving), ctx, req)
+}
+
+// SubmitProof mocks base method.
+func (m *MockProofsClient) SubmitProof(ctx context.Context, req *ethproofs.SubmitProofRequest) (*ethproofs.Proof, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubmitProof", ctx, req)
+	ret0, _ := ret[0].(*ethproofs.Proof)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SubmitProof indicates an expected call of SubmitProof.
+func (mr *MockProofsClientMockRecorder) SubmitProof(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitProof", reflect.TypeOf((*MockProofsClient)(nil).SubmitProof), ctx, req)
+}
+
+// MockSingleMachineClient is a mock of SingleMachineClient interface.
+type MockSingleMachineClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockSingleMachineClientMockRecorder
+	isgomock struct{}
+}
+
+// MockSingleMachineClientMockRecorder is the mock recorder for MockSingleMachineClient.
+type MockSingleMachineClientMockRecorder struct {
+	mock *MockSingleMachineClient
+}
+
+// NewMockSingleMachineClient creates a new mock instance.
+func NewMockSingleMachineClient(ctrl *gomock.Controller) *MockSingleMachineClient {
+	mock := &MockSingleMachineClient{ctrl: ctrl}
+	mock.recorder = &MockSingleMachineClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSingleMachineClient) EXPECT() *MockSingleMachineClientMockRecorder {
+	return m.recorder
+}
+
+// CreateMachine mocks base method.
+func (m *MockSingleMachineClient) CreateMachine(ctx context.Context, req *ethproofs.Machine) (*ethproofs.CreateMachineResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateMachine", ctx, req)
+	ret0, _ := ret[0].(*ethproofs.CreateMachineResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateMachine indicates an expected call of CreateMachine.
+func (mr *MockSingleMachineClientMockRecorder) CreateMachine(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMachine", reflect.TypeOf((*MockSingleMachineClient)(nil).CreateMachine), ctx, req)
+}
+
+// MockCloudInstanceClient is a mock of CloudInstanceClient interface.
+type MockCloudInstanceClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockCloudInstanceClientMockRecorder
+	isgomock struct{}
+}
+
+// MockCloudInstanceClientMockRecorder is the mock recorder for MockCloudInstanceClient.
+type MockCloudInstanceClientMockRecorder struct {
+	mock *MockCloudInstanceClient
+}
+
+// NewMockCloudInstanceClient creates a new mock instance.
+func NewMockCloudInstanceClient(ctrl *gomock.Controller) *MockCloudInstanceClient {
+	mock := &MockCloudInstanceClient{ctrl: ctrl}
+	mock.recorder = &MockCloudInstanceClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCloudInstanceClient) EXPECT() *MockCloudInstanceClientMockRecorder {
+	return m.recorder
+}
+
+// ListCloudInstances mocks base method.
+func (m *MockCloudInstanceClient) ListCloudInstances(ctx context.Context) ([]ethproofs.CloudInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListCloudInstances", ctx)
+	ret0, _ := ret[0].([]ethproofs.CloudInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListCloudInstances indicates an expected call of ListCloudInstances.
+func (mr *MockCloudInstanceClientMockRecorder) ListCloudInstances(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCloudInstances", reflect.TypeOf((*MockCloudInstanceClient)(nil).ListCloudInstances), ctx)
 }
