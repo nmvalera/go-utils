@@ -34,7 +34,7 @@ import (
 
 // Create client with configuration
 client, err := ethproofshttp.NewClient(&ethproofshttp.Config{
-    Addr:   "https://staging--ethproofs.netlify.app/api/v0",
+    Addr:   "https://ethproofs.org/api/v0",
     APIKey: "your-api-key",
 })
 if err != nil {
