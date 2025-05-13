@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	defaultAddr = "https://staging--ethproofs.netlify.app/api/v0"
+	defaultAddr = "https://ethproofs.org/api/v0"
 )
 
 type Config struct {
