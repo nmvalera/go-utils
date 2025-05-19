@@ -15,7 +15,7 @@ require (
 	github.com/ethereum/go-ethereum v1.14.12
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/hellofresh/health-go/v5 v5.5.3
+	github.com/hellofresh/health-go/v5 v5.5.4
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/justinas/alice v1.2.0
 	github.com/prometheus/client_golang v1.22.0
@@ -98,8 +98,8 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	go.opentelemetry.io/otel v1.29.0 // indirect
-	go.opentelemetry.io/otel/trace v1.29.0 // indirect
+	go.opentelemetry.io/otel v1.35.0 // indirect
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/sync v0.14.0 // indirect
