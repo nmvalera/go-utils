@@ -32,7 +32,7 @@ type Header struct {
 	BlobGasUsed      *hexutil.Uint64      `json:"blobGasUsed,omitempty"`
 	ExcessBlobGas    *hexutil.Uint64      `json:"excessBlobGas,omitempty"`
 	ParentBeaconRoot *gethcommon.Hash     `json:"parentBeaconBlockRoot,omitempty"`
-	RequestsRoot     *gethcommon.Hash     `json:"requestsRoot,omitempty"`
+	RequestsHash     *gethcommon.Hash     `json:"requestsHash,omitempty"`
 	Hash             gethcommon.Hash      `json:"hash"`
 }
 
@@ -56,7 +56,7 @@ func (h *Header) Header() *gethtypes.Header {
 		BaseFee:          (*big.Int)(h.BaseFee),
 		WithdrawalsHash:  h.WithdrawalsRoot,
 		ParentBeaconRoot: h.ParentBeaconRoot,
-		RequestsHash:     h.RequestsRoot,
+		RequestsHash:     h.RequestsHash,
 	}
 
 	if h.BlobGasUsed != nil {
@@ -89,7 +89,7 @@ func (h *Header) FromHeader(header *gethtypes.Header) *Header {
 	h.BaseFee = (*hexutil.Big)(header.BaseFee)
 	h.WithdrawalsRoot = header.WithdrawalsHash
 	h.ParentBeaconRoot = header.ParentBeaconRoot
-	h.RequestsRoot = header.RequestsHash
+	h.RequestsHash = header.RequestsHash
 
 	if header.BlobGasUsed != nil {
 		h.BlobGasUsed = (*hexutil.Uint64)(header.BlobGasUsed)
