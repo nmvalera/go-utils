@@ -34,7 +34,7 @@ type FieldInfo struct {
 	Value      reflect.Value       // Actual value of the field in the struct, possibly zeroed if the original value was unset (nil or within a nested nil struct field)
 	Processed  reflect.Value       // Value after processing (in particular after EncodeHook has been applied), if not processed, it is the same as Value
 	Encoded    string              // Encoded value of the field value
-	IsNil      bool                // Whether the orignal value was nil or nested within a nil struct field
+	IsNil      bool                // Whether the original value was nil or nested within a nil struct field
 }
 
 // Inspect inspects the given value and all its fields recursively
