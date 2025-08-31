@@ -20,7 +20,7 @@ type metricsClient struct {
 	chainID   prometheus.Gauge
 	chainHead prometheus.Gauge
 
-	featchInterval time.Duration
+	fetchInterval time.Duration
 
 	wg   sync.WaitGroup
 	stop chan struct{}
@@ -31,7 +31,7 @@ type metricsClient struct {
 func WithMetrics(client Client, opts ...MetricsOption) Client {
 	mc := &metricsClient{
 		Client:         client,
-		featchInterval: 500 * time.Millisecond,
+		fetchInterval: 500 * time.Millisecond,
 	}
 	for _, opt := range opts {
 		opt(mc)
@@ -75,7 +75,7 @@ func (c *metricsClient) Stop(ctx context.Context) error {
 
 func (c *metricsClient) fetchLoop() {
 	ctx := c.wrapCtx(context.Background())
-	ticker := time.NewTicker(c.featchInterval)
+	ticker := time.NewTicker(c.fetchInterval)
 	defer ticker.Stop()
 	for {
 		_ = c.fetch(ctx)
@@ -123,7 +123,7 @@ func (c *metricsClient) Collect(ch chan<- prometheus.Metric) {
 // WithFetchInterval sets the interval for fetching the metrics from the Ethereum RPC.
 func WithFetchInterval(interval time.Duration) MetricsOption {
 	return func(mc *metricsClient) {
-		mc.featchInterval = interval
+		mc.fetchInterval = interval
 	}
 }
 
