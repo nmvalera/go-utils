@@ -18,7 +18,7 @@ func TestQueueProof(t *testing.T) {
 		assert.Equal(t, "Bearer test-key", r.Header.Get("Authorization"))
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 
-		resp := ethproofs.ProofResponse{ProofID: 789}
+		resp := ethproofs.Proof{ProofID: 789}
 		err := json.NewEncoder(w).Encode(resp)
 		require.NoError(t, err)
 	}))
@@ -46,7 +46,7 @@ func TestStartProving(t *testing.T) {
 		assert.Equal(t, "Bearer test-key", r.Header.Get("Authorization"))
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 
-		resp := ethproofs.ProofResponse{ProofID: 790}
+		resp := ethproofs.Proof{ProofID: 790}
 		err := json.NewEncoder(w).Encode(resp)
 		require.NoError(t, err)
 	}))
@@ -74,7 +74,7 @@ func TestSubmitProof(t *testing.T) {
 		assert.Equal(t, "Bearer test-key", r.Header.Get("Authorization"))
 		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 
-		resp := ethproofs.ProofResponse{ProofID: 791}
+		resp := ethproofs.Proof{ProofID: 791}
 		err := json.NewEncoder(w).Encode(resp)
 		require.NoError(t, err)
 	}))

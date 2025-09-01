@@ -34,7 +34,7 @@ func TestCreateCluster(t *testing.T) {
 
 	req := &ethproofs.CreateClusterRequest{
 		Nickname:      "test-cluster",
-		Configuration: []ethproofs.ClusterConfig{},
+		Configuration: []*ethproofs.ClusterMachine{},
 	}
 
 	resp, err := client.CreateCluster(context.Background(), req)
