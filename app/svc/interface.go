@@ -3,9 +3,21 @@ package svc
 import (
 	"context"
 
+	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
 	"github.com/nmvalera/go-utils/tag"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+// API is a service that exposes API routes
+type API interface {
+	RegisterHandler(mux *httprouter.Router)
+}
+
+// Healthz is a service that exposes healthz routes
+type Healthz interface {
+	RegisterHealthzHandler(mux *httprouter.Router)
+}
 
 // Runnable is an interface for any service that maintains long living task(s)
 type Runnable interface {
@@ -51,4 +63,9 @@ type MetricsCollector interface {
 type Taggable interface {
 	// AttachTags attaches tags to the service
 	WithTags(tags ...*tag.Tag)
+}
+
+// Middleware is a service that exposes a middleware to be set on an App
+type Middleware interface {
+	RegisterMiddleware(chain alice.Chain) alice.Chain
 }

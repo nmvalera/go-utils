@@ -44,8 +44,9 @@ type App struct {
 
 	logger *zap.Logger
 
-	main       *kkrthttp.Entrypoint
-	mainRouter *httprouter.Router
+	mainMiddleware alice.Chain
+	main           *kkrthttp.Entrypoint
+	mainRouter     *httprouter.Router
 
 	healthz       *kkrthttp.Entrypoint
 	healthzRouter *httprouter.Router
@@ -58,13 +59,14 @@ type App struct {
 
 func NewApp(cfg *Config, opts ...Option) (*App, error) {
 	app := &App{
-		cfg:           cfg,
-		services:      make(map[string]*service),
-		done:          make(chan os.Signal),
-		logger:        zap.NewNop(),
-		mainRouter:    httprouter.New(),
-		healthzRouter: httprouter.New(),
-		prometheus:    prometheus.NewRegistry(),
+		cfg:            cfg,
+		services:       make(map[string]*service),
+		done:           make(chan os.Signal),
+		logger:         zap.NewNop(),
+		mainMiddleware: alice.New(),
+		mainRouter:     httprouter.New(),
+		healthzRouter:  httprouter.New(),
+		prometheus:     prometheus.NewRegistry(),
 	}
 
 	logger, err := cfg.Log.ZapConfig().Build()
@@ -277,7 +279,7 @@ func (app *App) setHandlers() {
 
 func (app *App) setMainHandler() {
 	if app.main != nil {
-		h := app.instrumentMiddleware().Then(app.mainRouter)
+		h := app.instrumentMiddleware().Extend(app.mainMiddleware).Then(app.mainRouter)
 		app.main.SetHandler(h)
 	}
 }
@@ -296,9 +298,9 @@ func (app *App) instrumentMiddleware() alice.Chain {
 }
 
 func (app *App) setHealthzHandler() {
-	app.healthzRouter.Handler(http.MethodGet, "/live", app.liveHealth.Handler())
-	app.healthzRouter.Handler(http.MethodGet, "/ready", app.readyHealth.Handler())
-	app.healthzRouter.Handler(http.MethodGet, "/metrics", promhttp.HandlerFor(app.prometheus, promhttp.HandlerOpts{}))
+	app.healthzRouter.Handler(http.MethodGet, *app.cfg.HealthzServer.LivenessPath, app.liveHealth.Handler())
+	app.healthzRouter.Handler(http.MethodGet, *app.cfg.HealthzServer.ReadinessPath, app.readyHealth.Handler())
+	app.healthzRouter.Handler(http.MethodGet, *app.cfg.HealthzServer.MetricsPath, promhttp.HandlerFor(app.prometheus, promhttp.HandlerOpts{}))
 
 	if app.healthz != nil {
 		app.healthz.SetHandler(app.healthzRouter)
@@ -421,6 +423,18 @@ func (s *service) construct() {
 
 	if t, ok := val.(svc.Checkable); ok {
 		s.healthConfig.Check = s.wrapCheck(t.Ready)
+	}
+
+	if t, ok := val.(svc.API); ok {
+		t.RegisterHandler(s.app.mainRouter)
+	}
+
+	if t, ok := val.(svc.Middleware); ok {
+		s.app.mainMiddleware = t.RegisterMiddleware(s.app.mainMiddleware)
+	}
+
+	if t, ok := val.(svc.Healthz); ok {
+		t.RegisterHealthzHandler(s.app.healthzRouter)
 	}
 
 	s.value = val
