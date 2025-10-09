@@ -379,6 +379,10 @@ func newService(id string, constructor func() (any, error), opts ...ServiceOptio
 	return s
 }
 
+func (s *service) context(ctx context.Context) context.Context {
+	return tag.WithTags(ctx, s.tags...)
+}
+
 func (s *service) Name() string {
 	return s.id
 }
@@ -534,7 +538,7 @@ func (s *service) start(ctx context.Context) *ServiceError {
 			if start, ok := s.value.(svc.Runnable); ok {
 				logger := s.getLogger()
 				logger.Info("Service starting...")
-				err := start.Start(log.WithLogger(ctx, logger))
+				err := start.Start(s.context(ctx))
 				if err != nil {
 					s.failWithLock(err)
 					logger.Error("Service failed to start", zap.Error(err))
@@ -577,7 +581,7 @@ func (s *service) stop(ctx context.Context) *ServiceError {
 		if stop, ok := s.value.(svc.Runnable); ok {
 			logger := s.getLogger()
 			logger.Info("Service stopping...")
-			err := stop.Stop(log.WithLogger(ctx, logger))
+			err := stop.Stop(s.context(ctx))
 			if err != nil {
 				s.failWithLock(err)
 				logger.Error("Service failed to stop", zap.Error(err))
