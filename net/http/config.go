@@ -30,18 +30,25 @@ func DefaultEntrypointConfig() *EntrypointConfig {
 				Count:    common.Ptr(9),
 			},
 		},
+		TLS: &TLSCertConfig{},
 	}
 }
 
 // EntrypointConfig is the configuration for an entrypoint.
 type EntrypointConfig struct {
-	Addr *string       `key:"addr,omitempty" desc:"TCP Address to listen on"`
-	HTTP *ServerConfig `key:"http,omitempty"`
-	Net  *ListenConfig `key:"net,omitempty"`
+	Addr *string        `key:"addr,omitempty" desc:"TCP Address to listen on"`
+	HTTP *ServerConfig  `key:"http,omitempty"`
+	Net  *ListenConfig  `key:"net,omitempty"`
+	TLS  *TLSCertConfig `key:"tls,omitempty"`
 }
 
 func (cfg *EntrypointConfig) Entrypoint() (*Entrypoint, error) {
 	return NewEntrypoint(common.Val(cfg.Addr), WithServer(cfg.HTTP.Server()), WithListenConfig(cfg.Net.ListenConfig()))
+}
+
+type TLSCertConfig struct {
+	CertFile *string `key:"cert-file,omitempty" env:"CERT_FILE" desc:"Path to the certificate file"`
+	KeyFile  *string `key:"key-file,omitempty" env:"KEY_FILE" desc:"Path to the key file"`
 }
 
 type embedConfig struct {
