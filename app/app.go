@@ -83,10 +83,6 @@ func NewApp(cfg *Config, opts ...Option) (*App, error) {
 		}
 	}
 
-	if app.replaceGlobalLoggers {
-		app.replaceLoggers()
-	}
-
 	app.liveHealth = newHealth(app)
 	app.readyHealth = newHealth(app)
 
@@ -96,7 +92,7 @@ func NewApp(cfg *Config, opts ...Option) (*App, error) {
 }
 
 func (app *App) replaceLoggers() {
-	if app.resetGlobalLoggers != nil {
+	if app.replaceGlobalLoggers {
 		app.resetGlobalLoggers = zap.ReplaceGlobals(app.logger)
 	}
 }
