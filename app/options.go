@@ -32,6 +32,13 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+func WithReplaceGlobalLoggers(replace bool) Option {
+	return func(a *App) error {
+		a.replaceGlobalLoggers = replace
+		return nil
+	}
+}
+
 type ServiceOption func(*service) error
 
 // WithHealthConfig sets the health config of the service.
