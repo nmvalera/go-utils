@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -9,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/julienschmidt/httprouter"
+	"github.com/justinas/alice"
 	"github.com/nmvalera/go-utils/common"
 	"github.com/nmvalera/go-utils/log"
 	kkrthttp "github.com/nmvalera/go-utils/net/http"
@@ -42,6 +45,11 @@ func newTestApp(t *testing.T) *App {
 			Net: &kkrthttp.ListenConfig{
 				KeepAlive: common.Ptr(time.Second),
 			},
+		},
+		HealthzServer: &HealthzServerConfig{
+			LivenessPath:  common.Ptr("/live"),
+			ReadinessPath: common.Ptr("/ready"),
+			MetricsPath:   common.Ptr("/metrics"),
 		},
 		Log: log.DefaultConfig(),
 	}
@@ -494,6 +502,123 @@ func TestMetrics(t *testing.T) {
 	families, err = app.prometheus.Gather()
 	require.NoError(t, err)
 	assert.Equal(t, float64(3), families[familyCount-1].GetMetric()[0].GetCounter().GetValue())
+
+	err = app.Stop(context.Background())
+	require.NoError(t, err)
+}
+
+type healthzAPIService struct{}
+
+func (s *healthzAPIService) RegisterHealthzHandler(mux *httprouter.Router) {
+	mux.Handler(http.MethodGet, "/main-test", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+}
+func TestHealthzAPI(t *testing.T) {
+	app := newTestApp(t)
+	require.NoError(t, app.Error())
+
+	healthz := &healthzAPIService{}
+	Provide(app, "healthz", func() (*healthzAPIService, error) {
+		app.EnableHealthzEntrypoint()
+		return healthz, nil
+	})
+
+	err := app.Start(context.Background())
+	require.NoError(t, err)
+
+	require.NotNil(t, app.healthz)
+	healthAddr := app.healthz.Addr()
+	require.NotEmpty(t, healthAddr)
+
+	req, err := http.NewRequest("GET", "http://"+healthAddr+"/main-test", http.NoBody)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
+
+	err = app.Stop(context.Background())
+	require.NoError(t, err)
+}
+
+type middlewareService struct{}
+
+func (s *middlewareService) RegisterMiddleware(chain alice.Chain) alice.Chain {
+	return chain.Append(func(_ http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(map[string]string{"message": "ok"})
+		})
+	})
+}
+
+func TestMiddlewareService(t *testing.T) {
+	app := newTestApp(t)
+	require.NoError(t, app.Error())
+
+	middleware := &middlewareService{}
+	Provide(app, "middleware", func() (*middlewareService, error) {
+		app.EnableMainEntrypoint()
+		return middleware, nil
+	})
+
+	err := app.Start(context.Background())
+	require.NoError(t, err)
+
+	require.NotNil(t, app.main)
+	mainAddr := app.main.Addr()
+	require.NotEmpty(t, mainAddr)
+
+	req, err := http.NewRequest("GET", "http://"+mainAddr, http.NoBody)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
+	var body map[string]string
+	err = json.NewDecoder(resp.Body).Decode(&body)
+	require.NoError(t, err)
+	assert.Equal(t, body, map[string]string{"message": "ok"})
+
+	err = app.Stop(context.Background())
+	require.NoError(t, err)
+}
+
+type healthzService struct{}
+
+func (s *healthzService) RegisterHealthzHandler(mux *httprouter.Router) {
+	mux.Handler(http.MethodGet, "/debug-test", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+}
+
+func TestHealthzService(t *testing.T) {
+	app := newTestApp(t)
+	require.NoError(t, app.Error())
+
+	healthz := &healthzService{}
+	Provide(app, "healthz", func() (*healthzService, error) {
+		app.EnableHealthzEntrypoint()
+		return healthz, nil
+	})
+
+	err := app.Start(context.Background())
+	require.NoError(t, err)
+
+	require.NotNil(t, app.healthz)
+	healthAddr := app.healthz.Addr()
+	require.NotEmpty(t, healthAddr)
+
+	req, err := http.NewRequest("GET", "http://"+healthAddr+"/debug-test", http.NoBody)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
 	err = app.Stop(context.Background())
 	require.NoError(t, err)

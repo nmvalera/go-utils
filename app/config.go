@@ -17,9 +17,14 @@ func DefaultConfig() *Config {
 	return &Config{
 		MainEntrypoint:    mainEp,
 		HealthzEntrypoint: healthzEp,
-		Log:               log.DefaultConfig(),
-		StartTimeout:      common.Ptr("10s"),
-		StopTimeout:       common.Ptr("10s"),
+		HealthzServer: &HealthzServerConfig{
+			LivenessPath:  common.Ptr("/live"),
+			ReadinessPath: common.Ptr("/ready"),
+			MetricsPath:   common.Ptr("/metrics"),
+		},
+		Log:          log.DefaultConfig(),
+		StartTimeout: common.Ptr("10s"),
+		StopTimeout:  common.Ptr("10s"),
 	}
 }
 
@@ -27,9 +32,16 @@ func DefaultConfig() *Config {
 type Config struct {
 	MainEntrypoint    *kkrthttp.EntrypointConfig `key:"main-ep" env:"MAIN_EP" flag:"main-ep" desc:"main entrypoint: "`
 	HealthzEntrypoint *kkrthttp.EntrypointConfig `key:"healthz-ep" env:"HEALTHZ_EP" flag:"healthz-ep" desc:"healthz entrypoint: "`
+	HealthzServer     *HealthzServerConfig       `key:"healthz-api" env:"HEALTHZ_API" flag:"healthz-api" desc:"healthz API configuration"`
 	Log               *log.Config                `key:"log"`
 	StartTimeout      *string                    `key:"start-timeout" env:"START_TIMEOUT" flag:"start-timeout" desc:"Start timeout"`
 	StopTimeout       *string                    `key:"stop-timeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
+}
+
+type HealthzServerConfig struct {
+	LivenessPath  *string `key:"liveness-path" env:"LIVENESS_PATH" flag:"liveness-path" desc:"Path on which the liveness probe will be served"`
+	ReadinessPath *string `key:"readiness-path" env:"READINESS_PATH" flag:"readiness-path" desc:"Path on which the readiness probe will be served"`
+	MetricsPath   *string `key:"metrics-path" env:"METRICS_PATH" flag:"metrics-path" desc:"Path on which the metrics will be served"`
 }
 
 // Env returns the environment variables for the given Config.
