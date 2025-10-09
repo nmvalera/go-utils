@@ -54,7 +54,7 @@ func main() {
 	}
 
 	log.Printf("\nExisting proofs (showing %d of %d):", len(proofs.SharpQueries), proofs.Total)
-	for _, p := range proofs.SharpQueries {
+	for _, p := range proofs.SharpQueries { //nolint:gocritic
 		log.Printf("- ID: %s", p.ID)
 		log.Printf("  Status: %s", p.Status)
 		log.Printf("  Created: %s", p.CreatedAt.Format(time.RFC3339))

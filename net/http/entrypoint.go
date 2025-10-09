@@ -114,6 +114,10 @@ func (ep *Entrypoint) SetHandler(handler http.Handler) {
 	ep.server.Handler = handler
 }
 
+func (ep *Entrypoint) Server() *http.Server {
+	return ep.server
+}
+
 // Start starts the entrypoint.
 func (ep *Entrypoint) Start(ctx context.Context) error {
 	ctx = ep.context(ctx)

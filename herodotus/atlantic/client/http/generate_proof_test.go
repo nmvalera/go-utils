@@ -32,7 +32,7 @@ func TestGenerateProof(t *testing.T) {
 		// Verify file
 		file, _, err := r.FormFile("pieFile")
 		require.NoError(t, err)
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		fileContent, err := io.ReadAll(file)
 		require.NoError(t, err)

@@ -353,7 +353,7 @@ func TestAppServers(t *testing.T) {
 
 	conn, err := net.Dial("tcp", mainAddr)
 	require.NoError(t, err)
-	conn.Close()
+	_ = conn.Close()
 
 	// Check main server is running
 	require.NotNil(t, app.healthz)
@@ -362,7 +362,7 @@ func TestAppServers(t *testing.T) {
 
 	conn, err = net.Dial("tcp", healthzAddr)
 	require.NoError(t, err)
-	conn.Close()
+	_ = conn.Close()
 
 	// Check healthz server is running
 	err = app.Stop(context.Background())
@@ -400,7 +400,7 @@ func TestHealthChecks(t *testing.T) {
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
 	// Test ready check
@@ -409,7 +409,7 @@ func TestHealthChecks(t *testing.T) {
 
 	resp, err = http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
 	// Test ready check with error
@@ -417,7 +417,7 @@ func TestHealthChecks(t *testing.T) {
 
 	resp, err = http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusServiceUnavailable)
 }
 
@@ -482,7 +482,7 @@ func TestMetrics(t *testing.T) {
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
 	// Test collectors are registered with correct labels
@@ -536,7 +536,7 @@ func TestHealthzAPI(t *testing.T) {
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
 	err = app.Stop(context.Background())
@@ -576,7 +576,7 @@ func TestMiddlewareService(t *testing.T) {
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 	var body map[string]string
 	err = json.NewDecoder(resp.Body).Decode(&body)
@@ -617,7 +617,7 @@ func TestHealthzService(t *testing.T) {
 
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 
 	err = app.Stop(context.Background())

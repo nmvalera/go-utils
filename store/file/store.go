@@ -29,7 +29,7 @@ func (f *Store) Store(_ context.Context, key string, reader io.Reader, _ *store.
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if _, err := io.Copy(file, reader); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
@@ -78,13 +78,13 @@ func (f *Store) Copy(_ context.Context, srcKey, dstKey string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer source.Close()
+	defer func() { _ = source.Close() }()
 
 	dest, err := os.Create(dstPath)
 	if err != nil {
 		return fmt.Errorf("failed to create destination file: %w", err)
 	}
-	defer dest.Close()
+	defer func() { _ = dest.Close() }()
 
 	_, err = io.Copy(dest, source)
 	return err

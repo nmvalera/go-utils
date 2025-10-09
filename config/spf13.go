@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// StringFlag is a flag that can be used to add a string flag
 type StringFlag struct {
 	ViperKey     string
 	Name         string
@@ -17,6 +18,7 @@ type StringFlag struct {
 	DefaultValue any
 }
 
+// Add adds the flag to the given viper and flag set
 func (flag *StringFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	defaultValue, ok := flag.DefaultValue.(string)
 	if !ok {
@@ -41,6 +43,7 @@ func (flag *StringFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
 
+// StringArrayFlag is a flag that can be used to add a string array flag
 type StringArrayFlag struct {
 	ViperKey     string
 	Name         string
@@ -50,6 +53,7 @@ type StringArrayFlag struct {
 	DefaultValue any
 }
 
+// Add adds the flag to the given viper and flag set
 func (flag *StringArrayFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	defaultValue, ok := flag.DefaultValue.([]string)
 	if !ok {
@@ -75,6 +79,7 @@ func (flag *StringArrayFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
 
+// BoolFlag is a flag that can be used to add a bool flag
 type BoolFlag struct {
 	ViperKey     string
 	Name         string
@@ -84,6 +89,7 @@ type BoolFlag struct {
 	DefaultValue any
 }
 
+// Add adds the flag to the given viper and flag set
 func (flag *BoolFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	defaultValue, ok := flag.DefaultValue.(bool)
 	if !ok {
@@ -109,6 +115,7 @@ func (flag *BoolFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
 
+// FlagDesc returns the description of the flag
 func FlagDesc(desc, envVar string) string {
 	if envVar != "" {
 		desc = fmt.Sprintf("%v [env: %v]", desc, envVar)
@@ -117,6 +124,7 @@ func FlagDesc(desc, envVar string) string {
 	return desc
 }
 
+// IntFlag is a flag that can be used to add an int flag
 type IntFlag struct {
 	ViperKey     string
 	Name         string
@@ -126,6 +134,7 @@ type IntFlag struct {
 	DefaultValue any
 }
 
+// Add adds the flag to the given viper and flag set
 func (flag *IntFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	defaultValue, ok := flag.DefaultValue.(int)
 	if !ok {
@@ -151,6 +160,7 @@ func (flag *IntFlag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	v.SetDefault(flag.ViperKey, flag.DefaultValue)
 }
 
+// Flag is a flag that can be used to add a flag
 type Flag struct {
 	ViperKey     string
 	Env          string
@@ -158,6 +168,7 @@ type Flag struct {
 	DefaultValue any
 }
 
+// Add adds the flag to the given viper and flag set
 func (flag *Flag) Add(v *viper.Viper, f *pflag.FlagSet) {
 	f.AddFlag(flag.Flag)
 	_ = v.BindPFlag(flag.ViperKey, flag.Flag)

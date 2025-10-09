@@ -56,14 +56,14 @@ func TestRPCHeader(t *testing.T) {
 func TestRPCBlock(t *testing.T) {
 	f, err := os.Open("testdata/block.json")
 	require.NoError(t, err)
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	rpcBlock := new(Block)
 	err = json.NewDecoder(f).Decode(rpcBlock)
 	require.NoError(t, err)
 
 	block := rpcBlock.Block()
-	assert.Equal(t, rpcBlock.Header.Hash, block.Hash())
+	assert.Equal(t, rpcBlock.Hash, block.Hash())
 
 	b, err := json.Marshal(rpcBlock)
 	require.NoError(t, err)

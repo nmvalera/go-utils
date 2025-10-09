@@ -14,7 +14,7 @@ type MyService struct {
 
 func main() {
 	v := config.NewViper()
-	app.AddFlags(v, pflag.NewFlagSet("test", pflag.ContinueOnError))
+	_ = app.AddFlags(v, pflag.NewFlagSet("test", pflag.ContinueOnError))
 
 	cfg := new(app.Config)
 	err := cfg.Unmarshal(v)
