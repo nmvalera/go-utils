@@ -3,7 +3,7 @@ package svc
 import (
 	"context"
 
-	"github.com/kkrt-labs/go-utils/tag"
+	"github.com/nmvalera/go-utils/tag"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

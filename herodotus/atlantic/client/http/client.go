@@ -8,7 +8,7 @@ import (
 	"net/url"
 
 	"github.com/Azure/go-autorest/autorest"
-	comhttp "github.com/kkrt-labs/go-utils/net/http"
+	comhttp "github.com/nmvalera/go-utils/net/http"
 )
 
 type Client struct {

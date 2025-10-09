@@ -1,7 +1,7 @@
 package jsonrpcws
 
 import (
-	ws "github.com/kkrt-labs/go-utils/websocket"
+	ws "github.com/nmvalera/go-utils/websocket"
 )
 
 type Config struct {

@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/Azure/go-autorest/autorest"
-	"github.com/kkrt-labs/go-utils/jsonrpc"
-	comhttp "github.com/kkrt-labs/go-utils/net/http"
-	comurl "github.com/kkrt-labs/go-utils/net/url"
+	"github.com/nmvalera/go-utils/jsonrpc"
+	comhttp "github.com/nmvalera/go-utils/net/http"
+	comurl "github.com/nmvalera/go-utils/net/url"
 )
 
 // Client allows to connect to a JSON-RPC server

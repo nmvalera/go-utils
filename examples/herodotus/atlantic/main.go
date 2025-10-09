@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
-	atlantichttp "github.com/kkrt-labs/go-utils/herodotus/atlantic/client/http"
+	atlantic "github.com/nmvalera/go-utils/herodotus/atlantic/client"
+	atlantichttp "github.com/nmvalera/go-utils/herodotus/atlantic/client/http"
 )
 
 func main() {

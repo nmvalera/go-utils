@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	ethproofs "github.com/kkrt-labs/go-utils/ethproofs/client"
+	ethproofs "github.com/nmvalera/go-utils/ethproofs/client"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -10,7 +10,7 @@ import (
 
 // Store is an interface for storing and loading objects.
 //
-//go:generate mockgen -destination=./mock/store.go -package=mock github.com/kkrt-labs/go-utils/store Store
+//go:generate mockgen -destination=./mock/store.go -package=mock github.com/nmvalera/go-utils/store Store
 type Store interface {
 	// Store stores an object in the store.
 	//

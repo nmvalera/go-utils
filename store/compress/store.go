@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	store "github.com/kkrt-labs/go-utils/store"
+	store "github.com/nmvalera/go-utils/store"
 )
 
 type Store struct {

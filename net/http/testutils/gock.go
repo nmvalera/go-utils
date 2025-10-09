@@ -3,7 +3,7 @@ package httptestutils
 import (
 	http "net/http"
 
-	kkrtgomock "github.com/kkrt-labs/go-utils/gomock"
+	kkrtgomock "github.com/nmvalera/go-utils/gomock"
 	gomock "go.uber.org/mock/gomock"
 	"gopkg.in/h2non/gock.v1"
 )

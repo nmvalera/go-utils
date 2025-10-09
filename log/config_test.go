@@ -3,8 +3,8 @@ package log
 import (
 	"testing"
 
-	"github.com/kkrt-labs/go-utils/common"
-	"github.com/kkrt-labs/go-utils/config"
+	"github.com/nmvalera/go-utils/common"
+	"github.com/nmvalera/go-utils/config"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

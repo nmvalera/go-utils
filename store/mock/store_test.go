@@ -3,7 +3,7 @@ package mock
 import (
 	"testing"
 
-	store "github.com/kkrt-labs/go-utils/store"
+	store "github.com/nmvalera/go-utils/store"
 	"github.com/stretchr/testify/assert"
 )
 

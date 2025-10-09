@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	comnet "github.com/kkrt-labs/go-utils/net"
-	comtime "github.com/kkrt-labs/go-utils/time"
+	comnet "github.com/nmvalera/go-utils/net"
+	comtime "github.com/nmvalera/go-utils/time"
 
 	"golang.org/x/net/http2"
 )

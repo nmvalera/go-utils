@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	store "github.com/kkrt-labs/go-utils/store"
+	store "github.com/nmvalera/go-utils/store"
 	"go.uber.org/multierr"
 )
 

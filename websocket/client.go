@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	comurl "github.com/kkrt-labs/go-utils/net/url"
+	comurl "github.com/nmvalera/go-utils/net/url"
 )
 
 // ClientConfig is the configuration for the websocket client

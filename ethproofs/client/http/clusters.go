@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	ethproofs "github.com/kkrt-labs/go-utils/ethproofs/client"
+	ethproofs "github.com/nmvalera/go-utils/ethproofs/client"
 )
 
 func (c *Client) CreateCluster(ctx context.Context, req *ethproofs.CreateClusterRequest) (*ethproofs.CreateClusterResponse, error) {

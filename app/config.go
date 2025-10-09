@@ -1,10 +1,10 @@
 package app
 
 import (
-	"github.com/kkrt-labs/go-utils/common"
-	"github.com/kkrt-labs/go-utils/config"
-	"github.com/kkrt-labs/go-utils/log"
-	kkrthttp "github.com/kkrt-labs/go-utils/net/http"
+	"github.com/nmvalera/go-utils/common"
+	"github.com/nmvalera/go-utils/config"
+	"github.com/nmvalera/go-utils/log"
+	kkrthttp "github.com/nmvalera/go-utils/net/http"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )

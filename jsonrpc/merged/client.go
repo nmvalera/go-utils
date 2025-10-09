@@ -3,10 +3,10 @@ package jsonrpcmrgd
 import (
 	"fmt"
 
-	"github.com/kkrt-labs/go-utils/jsonrpc"
-	jsonrpchttp "github.com/kkrt-labs/go-utils/jsonrpc/http"
-	jsonrpcws "github.com/kkrt-labs/go-utils/jsonrpc/websocket"
-	comurl "github.com/kkrt-labs/go-utils/net/url"
+	"github.com/nmvalera/go-utils/jsonrpc"
+	jsonrpchttp "github.com/nmvalera/go-utils/jsonrpc/http"
+	jsonrpcws "github.com/nmvalera/go-utils/jsonrpc/websocket"
+	comurl "github.com/nmvalera/go-utils/net/url"
 )
 
 // Config is a configuration for a JSON-RPC client

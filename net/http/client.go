@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	comtime "github.com/kkrt-labs/go-utils/time"
+	comtime "github.com/nmvalera/go-utils/time"
 )
 
 // Config for creating an HTTP Client

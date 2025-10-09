@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kkrt-labs/go-utils/store"
+	"github.com/nmvalera/go-utils/store"
 )
 
 type Store struct {

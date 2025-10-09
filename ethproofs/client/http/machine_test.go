@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	ethproofs "github.com/kkrt-labs/go-utils/ethproofs/client"
+	ethproofs "github.com/nmvalera/go-utils/ethproofs/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

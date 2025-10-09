@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 
-	"github.com/kkrt-labs/go-utils/tag"
+	"github.com/nmvalera/go-utils/tag"
 	"go.uber.org/zap"
 )
 
