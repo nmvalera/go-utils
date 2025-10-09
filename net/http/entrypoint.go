@@ -2,7 +2,7 @@ package http
 
 import (
 	"context"
-	"crypto/tls"
+	"errors"
 	"net"
 	"net/http"
 	"sync"
@@ -20,7 +20,7 @@ type Entrypoint struct {
 	lCfg   *net.ListenConfig
 	server *http.Server
 
-	tlsCfg *tls.Config
+	tlsCfg *TLSCertConfig
 
 	mux sync.RWMutex
 	l   net.Listener
@@ -58,7 +58,7 @@ func WithTags(tags ...*tag.Tag) EntrypointOption {
 }
 
 // WithTLSConfig sets the tls.Config to use for the entrypoint.
-func WithTLSConfig(tlsCfg *tls.Config) EntrypointOption {
+func WithTLSConfig(tlsCfg *TLSCertConfig) EntrypointOption {
 	return func(ep *Entrypoint) error {
 		ep.tlsCfg = tlsCfg
 		return nil
@@ -128,6 +128,10 @@ func (ep *Entrypoint) Start(ctx context.Context) error {
 	ep.l = l
 	ep.mux.Unlock()
 
+	if ep.tlsCfg != nil && ep.tlsCfg.CertFile != nil {
+		return ep.serveTLS(ctx, l)
+	}
+
 	return ep.serve(ctx, l)
 }
 
@@ -175,11 +179,6 @@ func (ep *Entrypoint) listen(ctx context.Context) (net.Listener, error) {
 		return nil, err
 	}
 
-	if ep.tlsCfg != nil {
-		logger.Info("Entrypoint upgrades to TLS")
-		l = tls.NewListener(l, ep.tlsCfg)
-	}
-
 	return l, nil
 }
 
@@ -194,6 +193,30 @@ func (ep *Entrypoint) serve(ctx context.Context, l net.Listener) error {
 		ep.srvErr = ep.server.Serve(l)
 		if ep.srvErr != nil && ep.srvErr != http.ErrServerClosed {
 			logger.Error("Entrypoint failed while serving incoming HTTP requests", zap.Error(ep.srvErr))
+		}
+		close(ep.done)
+	}()
+
+	return nil
+}
+
+func (ep *Entrypoint) serveTLS(ctx context.Context, l net.Listener) error {
+	logger := ep.logger(ctx)
+	if ep.tlsCfg.CertFile == nil {
+		return errors.New("cert file is required")
+	}
+
+	if ep.tlsCfg.KeyFile == nil {
+		return errors.New("key file is required")
+	}
+
+	logger.Info("Entrypoint is accepting and serving incoming HTTPS requests...")
+	ep.done = make(chan struct{})
+
+	go func() {
+		ep.srvErr = ep.server.ServeTLS(l, *ep.tlsCfg.CertFile, *ep.tlsCfg.KeyFile)
+		if ep.srvErr != nil && ep.srvErr != http.ErrServerClosed {
+			logger.Error("Entrypoint failed while serving incoming HTTPS requests", zap.Error(ep.srvErr))
 		}
 		close(ep.done)
 	}()

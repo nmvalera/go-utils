@@ -2,11 +2,11 @@ package http
 
 import (
 	"context"
-	"crypto/tls"
 	"net"
 	"net/http"
 	"testing"
 
+	"github.com/nmvalera/go-utils/common"
 	"github.com/nmvalera/go-utils/tag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,7 +64,10 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("WithTLSConfig", func(t *testing.T) {
-		tlsCfg := &tls.Config{}
+		tlsCfg := &TLSCertConfig{
+			CertFile: common.Ptr("test-cert.pem"),
+			KeyFile:  common.Ptr("test-key.pem"),
+		}
 		ep, err := NewEntrypoint("", WithTLSConfig(tlsCfg))
 		require.NoError(t, err)
 		assert.Equal(t, tlsCfg, ep.tlsCfg)
