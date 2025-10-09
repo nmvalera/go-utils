@@ -42,7 +42,9 @@ type App struct {
 
 	done chan os.Signal
 
-	logger *zap.Logger
+	logger               *zap.Logger
+	replaceGlobalLoggers bool
+	resetGlobalLoggers   func()
 
 	mainMiddleware alice.Chain
 	main           *kkrthttp.Entrypoint
@@ -81,12 +83,28 @@ func NewApp(cfg *Config, opts ...Option) (*App, error) {
 		}
 	}
 
+	if app.replaceGlobalLoggers {
+		app.replaceLoggers()
+	}
+
 	app.liveHealth = newHealth(app)
 	app.readyHealth = newHealth(app)
 
 	app.registerBaseMetrics()
 
 	return app, nil
+}
+
+func (app *App) replaceLoggers() {
+	if app.resetGlobalLoggers != nil {
+		app.resetGlobalLoggers = zap.ReplaceGlobals(app.logger)
+	}
+}
+
+func (app *App) resetLoggers() {
+	if app.resetGlobalLoggers != nil {
+		app.resetGlobalLoggers()
+	}
 }
 
 func (app *App) Provide(id string, constructor func() (any, error), opts ...ServiceOption) any {
@@ -197,8 +215,10 @@ func (app *App) start(ctx context.Context) error {
 		return app.top.err
 	}
 
+	app.replaceLoggers()
 	app.setHandlers()
 	if err := app.top.start(ctx); err != nil {
+		app.resetLoggers()
 		return err
 	}
 
@@ -218,6 +238,8 @@ func (app *App) Stop(ctx context.Context) error {
 }
 
 func (app *App) stop(ctx context.Context) error {
+	defer app.resetLoggers()
+
 	if app.top == nil {
 		return fmt.Errorf("no service constructed yet")
 	}
