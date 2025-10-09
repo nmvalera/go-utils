@@ -258,6 +258,14 @@ func newHealth(app *App) *health.Health {
 	return h
 }
 
+func (app *App) MainEntrypoint() *kkrthttp.EntrypointConfig {
+	return app.cfg.MainEntrypoint
+}
+
+func (app *App) HealthzEntrypoint() *kkrthttp.EntrypointConfig {
+	return app.cfg.HealthzEntrypoint
+}
+
 func (app *App) EnableMainEntrypoint() {
 	app.main = app.entrypoint("main", app.cfg.MainEntrypoint)
 }
