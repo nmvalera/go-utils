@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	jsonrpc "github.com/kkrt-labs/go-utils/jsonrpc"
+	jsonrpc "github.com/nmvalera/go-utils/jsonrpc"
 	gomock "go.uber.org/mock/gomock"
 )
 

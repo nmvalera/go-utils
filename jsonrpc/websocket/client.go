@@ -9,8 +9,8 @@ import (
 
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/gorilla/websocket"
-	"github.com/kkrt-labs/go-utils/jsonrpc"
-	ws "github.com/kkrt-labs/go-utils/websocket"
+	"github.com/nmvalera/go-utils/jsonrpc"
+	ws "github.com/nmvalera/go-utils/websocket"
 )
 
 // Client is a JSON-RPC client that communicates over a WebSocket connection.

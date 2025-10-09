@@ -1,4 +1,4 @@
-module github.com/kkrt-labs/go-utils
+module github.com/nmvalera/go-utils
 
 go 1.24.1
 

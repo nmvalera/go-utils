@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	comtime "github.com/kkrt-labs/go-utils/time"
+	comtime "github.com/nmvalera/go-utils/time"
 )
 
 // DialerConfig is a configuration for a net.Dialer.

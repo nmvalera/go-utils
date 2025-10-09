@@ -13,7 +13,7 @@ This package provides:
 ## Installation
 
 ```sh
-go get github.com/kkrt-labs/go-utils/herodotus/atlantic
+go get github.com/nmvalera/go-utils/herodotus/atlantic
 ```
 
 ## Authentication

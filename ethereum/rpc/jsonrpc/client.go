@@ -13,8 +13,8 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 	gethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/kkrt-labs/go-utils/ethereum/rpc"
-	"github.com/kkrt-labs/go-utils/jsonrpc"
+	"github.com/nmvalera/go-utils/ethereum/rpc"
+	"github.com/nmvalera/go-utils/jsonrpc"
 )
 
 // Client provides methods to interface with a JSON-RPC Ethereum Execution node

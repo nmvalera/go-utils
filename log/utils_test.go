@@ -3,7 +3,7 @@ package log
 import (
 	"testing"
 
-	"github.com/kkrt-labs/go-utils/tag"
+	"github.com/nmvalera/go-utils/tag"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

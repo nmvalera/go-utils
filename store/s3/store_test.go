@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/kkrt-labs/go-utils/aws/mock"
-	"github.com/kkrt-labs/go-utils/common"
-	"github.com/kkrt-labs/go-utils/store"
+	"github.com/nmvalera/go-utils/aws/mock"
+	"github.com/nmvalera/go-utils/common"
+	"github.com/nmvalera/go-utils/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"

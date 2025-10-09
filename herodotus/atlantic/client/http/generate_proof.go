@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
+	atlantic "github.com/nmvalera/go-utils/herodotus/atlantic/client"
 )
 
 func (c *Client) GenerateProof(ctx context.Context, req *atlantic.GenerateProofRequest) (*atlantic.GenerateProofResponse, error) {

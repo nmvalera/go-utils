@@ -13,7 +13,7 @@ This package provides:
 ## Installation
 
 ```sh
-go get github.com/kkrt-labs/go-utils/ethproofs
+go get github.com/nmvalera/go-utils/ethproofs
 ```
 
 ## Authentication

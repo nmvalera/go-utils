@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	ethproofs "github.com/kkrt-labs/go-utils/ethproofs/client"
-	ethproofshttp "github.com/kkrt-labs/go-utils/ethproofs/client/http"
+	ethproofs "github.com/nmvalera/go-utils/ethproofs/client"
+	ethproofshttp "github.com/nmvalera/go-utils/ethproofs/client/http"
 )
 
 func main() {

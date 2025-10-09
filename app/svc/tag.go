@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/kkrt-labs/go-utils/tag"
+	"github.com/nmvalera/go-utils/tag"
 )
 
 type Tagged struct {

@@ -7,8 +7,8 @@ import (
 	"io"
 	"testing"
 
-	store "github.com/kkrt-labs/go-utils/store"
-	"github.com/kkrt-labs/go-utils/store/mock"
+	store "github.com/nmvalera/go-utils/store"
+	"github.com/nmvalera/go-utils/store/mock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kkrt-labs/go-utils/app"
-	"github.com/kkrt-labs/go-utils/config"
+	"github.com/nmvalera/go-utils/app"
+	"github.com/nmvalera/go-utils/config"
 	"github.com/spf13/pflag"
 )
 

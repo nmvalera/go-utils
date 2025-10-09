@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/kkrt-labs/go-utils/log"
+	"github.com/nmvalera/go-utils/log"
 	"go.uber.org/zap"
 )
 

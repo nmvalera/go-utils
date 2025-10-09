@@ -1,7 +1,7 @@
 package jsonrpchttp
 
 import (
-	comhttp "github.com/kkrt-labs/go-utils/net/http"
+	comhttp "github.com/nmvalera/go-utils/net/http"
 )
 
 type Config struct {

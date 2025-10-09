@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/kkrt-labs/go-utils/common"
+	"github.com/nmvalera/go-utils/common"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )

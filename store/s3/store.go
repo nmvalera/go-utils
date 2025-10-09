@@ -9,9 +9,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/smithy-go"
-	"github.com/kkrt-labs/go-utils/aws"
-	"github.com/kkrt-labs/go-utils/common"
-	"github.com/kkrt-labs/go-utils/store"
+	"github.com/nmvalera/go-utils/aws"
+	"github.com/nmvalera/go-utils/common"
+	"github.com/nmvalera/go-utils/store"
 )
 
 // Store is a store that uses S3 as the underlying storage.

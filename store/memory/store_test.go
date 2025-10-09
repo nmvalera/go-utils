@@ -6,7 +6,7 @@ import (
 	"io"
 	"testing"
 
-	store "github.com/kkrt-labs/go-utils/store"
+	store "github.com/nmvalera/go-utils/store"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

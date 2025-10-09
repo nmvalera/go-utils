@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Azure/go-autorest/autorest"
-	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
+	atlantic "github.com/nmvalera/go-utils/herodotus/atlantic/client"
 )
 
 func (c *Client) ListProofs(ctx context.Context, req *atlantic.ListProofsRequest) (*atlantic.ListProofsResponse, error) {

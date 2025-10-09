@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	comurl "github.com/kkrt-labs/go-utils/net/url"
+	comurl "github.com/nmvalera/go-utils/net/url"
 	"github.com/stretchr/testify/require"
 )
 

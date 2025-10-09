@@ -3,7 +3,7 @@ package jsonrpcmock
 import (
 	"fmt"
 
-	jsonrpc "github.com/kkrt-labs/go-utils/jsonrpc"
+	jsonrpc "github.com/nmvalera/go-utils/jsonrpc"
 	"go.uber.org/mock/gomock"
 )
 

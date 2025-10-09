@@ -7,9 +7,9 @@ import (
 	"time"
 
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/kkrt-labs/go-utils/app/svc"
-	"github.com/kkrt-labs/go-utils/ethereum/rpc"
-	"github.com/kkrt-labs/go-utils/ethereum/rpc/mock"
+	"github.com/nmvalera/go-utils/app/svc"
+	"github.com/nmvalera/go-utils/ethereum/rpc"
+	"github.com/nmvalera/go-utils/ethereum/rpc/mock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

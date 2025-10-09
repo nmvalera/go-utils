@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	atlantic "github.com/kkrt-labs/go-utils/herodotus/atlantic/client"
+	atlantic "github.com/nmvalera/go-utils/herodotus/atlantic/client"
 )
 
 type atlanticQueryRespMsg struct {

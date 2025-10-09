@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/kkrt-labs/go-utils/app/svc"
-	"github.com/kkrt-labs/go-utils/log"
-	"github.com/kkrt-labs/go-utils/tag"
+	"github.com/nmvalera/go-utils/app/svc"
+	"github.com/nmvalera/go-utils/log"
+	"github.com/nmvalera/go-utils/tag"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Azure/go-autorest/autorest"
-	"github.com/kkrt-labs/go-utils/jsonrpc"
-	httptestutils "github.com/kkrt-labs/go-utils/net/http/testutils"
+	"github.com/nmvalera/go-utils/jsonrpc"
+	httptestutils "github.com/nmvalera/go-utils/net/http/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"

@@ -9,7 +9,7 @@ import (
 
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/gorilla/websocket"
-	comnet "github.com/kkrt-labs/go-utils/net"
+	comnet "github.com/nmvalera/go-utils/net"
 )
 
 // DialerConfig is a configuration for a websocket.Dialer.

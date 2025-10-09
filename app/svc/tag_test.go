@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kkrt-labs/go-utils/tag"
+	"github.com/nmvalera/go-utils/tag"
 	"github.com/stretchr/testify/require"
 )
 
