@@ -532,14 +532,15 @@ func (s *service) start(ctx context.Context) *ServiceError {
 		// If all dependencies started successfully then start the service
 		if s.err == nil {
 			if start, ok := s.value.(svc.Runnable); ok {
-				s.getLogger().Info("Service starting...")
-				err := start.Start(ctx)
+				logger := s.getLogger()
+				logger.Info("Service starting...")
+				err := start.Start(log.WithLogger(ctx, logger))
 				if err != nil {
 					s.failWithLock(err)
-					s.getLogger().Error("Service failed to start", zap.Error(err))
+					logger.Error("Service failed to start", zap.Error(err))
 					return
 				}
-				s.getLogger().Info("Service started successfully")
+				logger.Info("Service started successfully")
 			}
 		}
 
@@ -574,14 +575,15 @@ func (s *service) stop(ctx context.Context) *ServiceError {
 		}()
 
 		if stop, ok := s.value.(svc.Runnable); ok {
-			s.getLogger().Info("Service stopping...")
-			err := stop.Stop(ctx)
+			logger := s.getLogger()
+			logger.Info("Service stopping...")
+			err := stop.Stop(log.WithLogger(ctx, logger))
 			if err != nil {
 				s.failWithLock(err)
-				s.getLogger().Error("Service failed to stop", zap.Error(err))
+				logger.Error("Service failed to stop", zap.Error(err))
 				return
 			}
-			s.getLogger().Info("Service successfully stopped")
+			logger.Info("Service successfully stopped")
 		}
 		if s.err == nil {
 			s.setStatusWithLock(Stopped)
