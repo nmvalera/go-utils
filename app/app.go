@@ -509,7 +509,9 @@ func (s *service) start(ctx context.Context) *ServiceError {
 		s.setStatusWithLock(Starting)
 
 		// Start dependencies
-		startErr := new(ServiceError)
+		startErr := &ServiceError{
+			svc: s,
+		}
 		wg := sync.WaitGroup{}
 		wg.Add(len(s.deps))
 		for _, dep := range s.deps {
@@ -585,7 +587,9 @@ func (s *service) stop(ctx context.Context) *ServiceError {
 			s.setStatusWithLock(Stopped)
 		}
 
-		stopErr := new(ServiceError)
+		stopErr := &ServiceError{
+			svc: s,
+		}
 		wg := sync.WaitGroup{}
 		wg.Add(len(s.deps))
 		for _, dep := range s.deps {
