@@ -44,7 +44,7 @@ func (c *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 	case store.ContentEncodingGzip:
 		buf := new(bytes.Buffer)
 		gw := gzip.NewWriter(buf)
-		defer gw.Close()
+		defer func() { _ = gw.Close() }()
 		if _, err := io.Copy(gw, reader); err != nil {
 			return fmt.Errorf("failed to compress with gzip: %w", err)
 		}
@@ -58,7 +58,7 @@ func (c *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 	case store.ContentEncodingZlib:
 		buf := new(bytes.Buffer)
 		zw := zlib.NewWriter(buf)
-		defer zw.Close()
+		defer func() { _ = zw.Close() }()
 		if _, err := io.Copy(zw, reader); err != nil {
 			return fmt.Errorf("failed to compress with zlib: %w", err)
 		}
@@ -75,7 +75,7 @@ func (c *Store) Store(ctx context.Context, key string, reader io.Reader, headers
 		if err != nil {
 			return fmt.Errorf("failed to create flate writer: %w", err)
 		}
-		defer fw.Close()
+		defer func() { _ = fw.Close() }()
 		if _, err := io.Copy(fw, reader); err != nil {
 			return fmt.Errorf("failed to compress with flate: %w", err)
 		}

@@ -32,6 +32,7 @@ type Client interface {
 }
 
 // Request/Response types for Clusters
+// CreateClusterRequest is the request to create a cluster
 type CreateClusterRequest struct {
 	Nickname      string          `json:"nickname"`
 	Description   string          `json:"description,omitempty"`
@@ -41,17 +42,21 @@ type CreateClusterRequest struct {
 	Configuration []ClusterConfig `json:"configuration"`
 }
 
+// ClusterConfig is the configuration for a cluster
 type ClusterConfig struct {
 	InstanceType  string `json:"instance_type"`
 	InstanceCount int64  `json:"instance_count"`
 }
 
+// CreateClusterResponse is the response to create a cluster
 type CreateClusterResponse struct {
 	ID int64 `json:"id"`
 }
 
+// ListClustersResponse is the response to list clusters
 type ListClustersResponse []Cluster
 
+// Cluster is a cluster
 type Cluster struct {
 	ID                   int64           `json:"id"`
 	Nickname             string          `json:"nickname"`
@@ -72,21 +77,27 @@ type CreateMachineRequest struct {
 	InstanceType string `json:"instance_type"`
 }
 
+// CreateMachineResponse is the response to create a machine
+
+// CreateMachineResponse is the response to create a machine
 type CreateMachineResponse struct {
 	ID int64 `json:"id"`
 }
 
 // Request/Response types for Proofs
+// QueueProofRequest is the request to queue a proof
 type QueueProofRequest struct {
 	BlockNumber int64 `json:"block_number"`
 	ClusterID   int64 `json:"cluster_id"`
 }
 
+// StartProvingRequest is the request to start proving
 type StartProvingRequest struct {
 	BlockNumber int64 `json:"block_number"`
 	ClusterID   int64 `json:"cluster_id"`
 }
 
+// SubmitProofRequest is the request to submit a proof
 type SubmitProofRequest struct {
 	BlockNumber   int64  `json:"block_number"`
 	ClusterID     int64  `json:"cluster_id"`
@@ -96,13 +107,16 @@ type SubmitProofRequest struct {
 	VerifierID    string `json:"verifier_id,omitempty"`
 }
 
+// ProofResponse is the response to a proof
 type ProofResponse struct {
 	ProofID int64 `json:"proof_id"`
 }
 
 // Request/Response types for AWS Pricing
+// ListAWSPricingResponse is the response to list AWS pricing
 type ListAWSPricingResponse = []AWSInstance
 
+// AWSInstance is an AWS instance
 type AWSInstance struct {
 	ID              int64   `json:"id"`
 	InstanceType    string  `json:"instance_type"`

@@ -16,12 +16,12 @@ func TestImplementsStore(t *testing.T) {
 }
 
 func TestStoreAndLoad(t *testing.T) {
-	store := New()
+	s := New()
 
-	err := store.Store(context.Background(), "test", bytes.NewReader([]byte("test")), nil)
+	err := s.Store(context.Background(), "test", bytes.NewReader([]byte("test")), nil)
 	require.NoError(t, err)
 
-	reader, _, err := store.Load(context.Background(), "test")
+	reader, _, err := s.Load(context.Background(), "test")
 	require.NoError(t, err)
 
 	data, err := io.ReadAll(reader)

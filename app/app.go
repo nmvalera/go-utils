@@ -102,33 +102,33 @@ func (app *App) provide(id string, constructor func() (any, error), opts ...Serv
 		id = reflect.TypeOf(constructor).Out(0).String()
 	}
 
-	if svc, ok := app.services[id]; ok {
-		app.current.addDep(svc) // current can not be nil here
-		return svc.value
+	if srvc, ok := app.services[id]; ok {
+		app.current.addDep(srvc) // current can not be nil here
+		return srvc.value
 	}
 
-	svc := app.createService(id, constructor, opts...)
-	app.services[id] = svc
+	srvc := app.createService(id, constructor, opts...)
+	app.services[id] = srvc
 
-	return svc.value
+	return srvc.value
 }
 
 func (app *App) createService(id string, constructor func() (any, error), opts ...ServiceOption) *service {
 	previous := app.current
-	svc := newService(id, constructor, opts...)
-	svc.app = app
+	srvc := newService(id, constructor, opts...)
+	srvc.app = app
 
-	app.current = svc // set the current service pointer
-	svc.construct()   // construct can perform calls to Provide moving the current service pointer
+	app.current = srvc // set the current service pointer
+	srvc.construct()   // construct can perform calls to Provide moving the current service pointer
 	if previous != nil {
-		previous.addDep(svc)
+		previous.addDep(srvc)
 	} else {
-		app.top = svc
+		app.top = srvc
 	}
 
 	app.current = previous // restore the current service pointer
 
-	return svc
+	return srvc
 }
 
 func Provide[T any](app *App, id string, constructor func() (T, error), opts ...ServiceOption) T {

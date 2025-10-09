@@ -7,11 +7,13 @@ import (
 	"github.com/nmvalera/go-utils/tag"
 )
 
+// Tagged enable to attach tags to a service
 type Tagged struct {
 	mux sync.RWMutex
 	tag.Set
 }
 
+// NewTagged creates a new Tagged with the given tags
 func NewTagged(tags ...*tag.Tag) *Tagged {
 	return &Tagged{Set: tag.Set(tags)}
 }

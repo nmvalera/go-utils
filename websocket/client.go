@@ -428,11 +428,11 @@ func (c *Client) waitLoops(ctx context.Context) error {
 	select {
 	case <-done:
 		// Loops have properly finished
-		c.conn.Close()
+		_ = c.conn.Close()
 	case <-ctx.Done():
 		// Context timed out, before loops properly finished, something might go wrong with conn closing
 		// so we force the connection to close
-		c.conn.Close()
+		_ = c.conn.Close()
 		<-done
 	}
 

@@ -74,7 +74,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	go func() {
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		for resp := range h.resps {
 			err = conn.WriteJSON(resp)
 			if err != nil {

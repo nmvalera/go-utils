@@ -14,10 +14,12 @@ var decodeHooks = []mapstructure.DecodeHookFunc{
 	mapstructure.StringToTimeDurationHookFunc(),
 }
 
+// RegisterGlobalDecodeHooks registers the given decode hooks to the global decode hooks
 func RegisterGlobalDecodeHooks(hks ...mapstructure.DecodeHookFunc) {
 	decodeHooks = append(decodeHooks, hks...)
 }
 
+// GlobalDecodeHook returns the global decode hook
 func GlobalDecodeHook() mapstructure.DecodeHookFunc {
 	return mapstructure.ComposeDecodeHookFunc(decodeHooks...)
 }
@@ -42,6 +44,7 @@ func StringToWeakSliceDecodeHookFunc(sep string) mapstructure.DecodeHookFunc {
 	}
 }
 
+// PtrToValueDecodeHookFunc is a mapstructure decode hook that converts a pointer to a value
 func PtrToValueDecodeHookFunc() mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,
@@ -68,6 +71,7 @@ func PtrToValueDecodeHookFunc() mapstructure.DecodeHookFunc {
 	}
 }
 
+// NilStrToNilDecodeHookFunc is a mapstructure decode hook that converts a string to a nil
 func NilStrToNilDecodeHookFunc(nilStr string) mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,

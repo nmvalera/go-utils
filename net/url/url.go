@@ -17,7 +17,7 @@ func Parse(baseURL string) (*url.URL, error) {
 	}
 	if u.RawQuery != "" {
 		// handle unencoded semicolons
-		u.RawQuery = strings.Replace(u.RawQuery, ";", "%3B", -1)
+		u.RawQuery = strings.ReplaceAll(u.RawQuery, ";", "%3B")
 		var q url.Values
 		q, err = url.ParseQuery(u.RawQuery)
 		if err != nil {

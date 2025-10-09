@@ -388,7 +388,7 @@ func (c *Client) TransactionByHash(ctx context.Context, hash gethcommon.Hash) (t
 		return nil, false, err
 	} else if res == nil {
 		return nil, false, geth.NotFound
-	} else if _, r, _ := res.Transaction.RawSignatureValues(); r == nil {
+	} else if _, r, _ := res.RawSignatureValues(); r == nil {
 		return nil, false, fmt.Errorf("server returned transaction without signature")
 	}
 	return res.Tx(), res.BlockNumber == nil, nil
@@ -410,7 +410,7 @@ func (c *Client) TransactionInBlock(ctx context.Context, blockHash gethcommon.Ha
 	}
 	if res == nil {
 		return nil, geth.NotFound
-	} else if _, r, _ := res.Transaction.RawSignatureValues(); r == nil {
+	} else if _, r, _ := res.RawSignatureValues(); r == nil {
 		return nil, fmt.Errorf("server returned transaction without signature")
 	}
 	return res.Tx(), err

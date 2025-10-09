@@ -14,7 +14,7 @@ PACKAGES ?= $(shell go list ./... | egrep -v "testutils" )
 BUILD_FOLDER = build
 
 # Tools versions
-GOLANGCI_VERSION = v1.64.7
+GOLANGCI_VERSION = v2.5.0
 MOCKGEN_VERSION = v0.5.0
 
 # GOPRIVVATE

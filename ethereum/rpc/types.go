@@ -136,7 +136,7 @@ func (b *Block) Block() *gethtypes.Block {
 }
 
 func (b *Block) FromBlock(block *gethtypes.Block, config *params.ChainConfig) *Block {
-	b.Header.FromHeader(block.Header())
+	b.FromHeader(block.Header())
 	b.Size = hexutil.Uint64(block.Size())
 	b.Withdrawals = block.Withdrawals()
 

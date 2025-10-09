@@ -9,14 +9,17 @@ var hooks = []EncodeHookFunc{
 	StringerHook(),
 }
 
+// RegisterGlobalEncodeHooks registers the given encode hooks to the global encode hooks
 func RegisterGlobalEncodeHooks(hks ...EncodeHookFunc) {
 	hooks = append(hooks, hks...)
 }
 
+// GlobalEncodeHook returns the global encode hook
 func GlobalEncodeHook() EncodeHookFunc {
 	return CombineHooks(hooks...)
 }
 
+// CombineHooks combines the given encode hooks into a single encode hook
 func CombineHooks(hooks ...EncodeHookFunc) EncodeHookFunc {
 	return func(val reflect.Value) (reflect.Value, error) {
 		var err error
@@ -30,6 +33,7 @@ func CombineHooks(hooks ...EncodeHookFunc) EncodeHookFunc {
 	}
 }
 
+// StringerHook is a mapstructure encode hook that converts a value to a string
 func StringerHook() EncodeHookFunc {
 	return func(val reflect.Value) (reflect.Value, error) {
 		if val.Type().Implements(reflect.TypeOf((*fmt.Stringer)(nil)).Elem()) {

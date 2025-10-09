@@ -82,8 +82,8 @@ func (l *Layout) UnmarshalJSON(data []byte) error {
 type Prover int
 
 const (
-	ProverUnknown Prover = iota
-	ProverStarkwareSharp
+	ProverUnknown        Prover = iota // ProverUnknown is the unknown prover
+	ProverStarkwareSharp               // ProverStarkwareSharp is the Starkware SHARP prover
 )
 
 var provers = []string{

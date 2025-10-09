@@ -90,7 +90,7 @@ func TestFileStore(t *testing.T) {
 			reader, _, err := s.Load(context.Background(), tt.key)
 			require.NoError(t, err)
 
-			defer reader.Close()
+			defer func() { _ = reader.Close() }()
 
 			content, err := io.ReadAll(reader)
 			require.NoError(t, err)
@@ -105,7 +105,7 @@ func TestFileStore(t *testing.T) {
 				reader, _, err := s.Load(context.Background(), tt.keyCopy)
 				require.NoError(t, err)
 
-				defer reader.Close()
+				defer func() { _ = reader.Close() }()
 
 				content, err := io.ReadAll(reader)
 				require.NoError(t, err)

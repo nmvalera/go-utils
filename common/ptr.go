@@ -25,6 +25,7 @@ func Val[T any](v *T) T {
 	return *v
 }
 
+// ValSlice returns a slice of values from the given pointers
 func ValSlice[T any](v ...*T) []T {
 	values := make([]T, len(v))
 	for i := range v {
@@ -33,6 +34,7 @@ func ValSlice[T any](v ...*T) []T {
 	return values
 }
 
+// Copy returns a copy of the given pointer
 func Copy[T any](v *T) *T {
 	if v == nil {
 		return nil
@@ -40,6 +42,7 @@ func Copy[T any](v *T) *T {
 	return Ptr(Val(v))
 }
 
+// CopySlice returns a slice of copies of the given pointers
 func CopySlice[T any](v ...*T) []*T {
 	slice := make([]*T, len(v))
 	for i := range v {

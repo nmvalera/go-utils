@@ -28,5 +28,5 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 
 // MarshalJSON marshals a JSON duration to format "1h2m3s"
 func (d Duration) MarshalJSON() (b []byte, err error) {
-	return []byte(fmt.Sprintf(`%q`, d.Duration.String())), nil
+	return []byte(fmt.Sprintf(`%q`, d.String())), nil
 }
