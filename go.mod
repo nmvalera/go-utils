@@ -15,7 +15,7 @@ require (
 	github.com/ethereum/go-ethereum v1.14.12
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/gorilla/websocket v1.5.3
-	github.com/hellofresh/health-go/v5 v5.5.4
+	github.com/hellofresh/health-go/v5 v5.5.5
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/justinas/alice v1.2.0
 	github.com/prometheus/client_golang v1.22.0
