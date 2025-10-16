@@ -439,6 +439,10 @@ func (s *service) failWithLock(err error) {
 	_ = s.fail(err)
 }
 
+func okCheck(_ context.Context) error {
+	return nil
+}
+
 func (s *service) construct() {
 	s.setStatus(Constructing)
 	val, constructorErr := s.constructor()
@@ -451,8 +455,11 @@ func (s *service) construct() {
 		t.WithTags(s.tags...)
 	}
 
-	if t, ok := val.(svc.Checkable); ok {
-		s.healthConfig.Check = s.wrapCheck(t.Ready)
+	switch v := val.(type) {
+	case svc.Checkable:
+		s.healthConfig.Check = s.wrapCheck(v.Ready)
+	case svc.Runnable:
+		s.healthConfig.Check = s.wrapCheck(okCheck)
 	}
 
 	if t, ok := val.(svc.API); ok {
