@@ -617,7 +617,9 @@ The `app` package integrates several production-ready libraries:
 - Use appropriate timeouts in health check configuration
 
 ### 5. Logging
+- Always use contextual logging (e.g. `log.LoggerFromContext(ctx).Info(...)`) to enable passing fields across log messages
 - Use structured logging with fields rather than string formatting
+- Use base zap logging (e.g `logger.Info(..)`) and not sugared logging (e.g. `logger.Sugar().Infow(..)`) which brings a drop of performance
 - Add component context via tags or logger fields
 - Log at appropriate levels (Info for lifecycle, Debug for operations, Error for failures)
 
