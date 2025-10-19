@@ -14,6 +14,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/ethereum/go-ethereum v1.14.12
 	github.com/go-viper/mapstructure/v2 v2.4.0
+	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/hellofresh/health-go/v5 v5.5.5
 	github.com/julienschmidt/httprouter v1.3.0

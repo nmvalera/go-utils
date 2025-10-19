@@ -15,8 +15,8 @@ import (
 
 	"github.com/MadAppGang/httplog"
 	httplogzap "github.com/MadAppGang/httplog/zap"
+	"github.com/gorilla/mux"
 	"github.com/hellofresh/health-go/v5"
-	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 	"github.com/nmvalera/go-utils/app/svc"
 	"github.com/nmvalera/go-utils/log"
@@ -48,10 +48,10 @@ type App struct {
 
 	mainMiddleware alice.Chain
 	main           *kkrthttp.Entrypoint
-	mainRouter     *httprouter.Router
+	mainRouter     *mux.Router
 
 	healthz       *kkrthttp.Entrypoint
-	healthzRouter *httprouter.Router
+	healthzRouter *mux.Router
 
 	liveHealth  *health.Health
 	readyHealth *health.Health
@@ -66,8 +66,8 @@ func NewApp(cfg *Config, opts ...Option) (*App, error) {
 		done:           make(chan os.Signal),
 		logger:         zap.NewNop(),
 		mainMiddleware: alice.New(),
-		mainRouter:     httprouter.New(),
-		healthzRouter:  httprouter.New(),
+		mainRouter:     mux.NewRouter(),
+		healthzRouter:  mux.NewRouter(),
 		prometheus:     prometheus.NewRegistry(),
 	}
 
@@ -324,9 +324,9 @@ func (app *App) instrumentMiddleware() alice.Chain {
 }
 
 func (app *App) setHealthzHandler() {
-	app.healthzRouter.Handler(http.MethodGet, *app.cfg.HealthzServer.LivenessPath, app.liveHealth.Handler())
-	app.healthzRouter.Handler(http.MethodGet, *app.cfg.HealthzServer.ReadinessPath, app.readyHealth.Handler())
-	app.healthzRouter.Handler(http.MethodGet, *app.cfg.HealthzServer.MetricsPath, promhttp.HandlerFor(app.prometheus, promhttp.HandlerOpts{}))
+	app.healthzRouter.Path(*app.cfg.HealthzServer.LivenessPath).Methods(http.MethodGet).Handler(app.liveHealth.Handler())
+	app.healthzRouter.Path(*app.cfg.HealthzServer.ReadinessPath).Methods(http.MethodGet).Handler(app.readyHealth.Handler())
+	app.healthzRouter.Path(*app.cfg.HealthzServer.MetricsPath).Methods(http.MethodGet).Handler(promhttp.HandlerFor(app.prometheus, promhttp.HandlerOpts{}))
 
 	if app.healthz != nil {
 		app.healthz.SetHandler(app.healthzRouter)
