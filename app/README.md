@@ -86,7 +86,7 @@ type Checkable interface {
 Services that expose HTTP routes on the main server
 ```go
 type API interface {
-    RegisterHandler(mux *httprouter.Router)
+    RegisterHandler(mux *mux.Router)
 }
 ```
 
@@ -94,7 +94,7 @@ type API interface {
 Services that expose routes on the health check server
 ```go
 type Healthz interface {
-    RegisterHealthzHandler(mux *httprouter.Router)
+    RegisterHealthzHandler(mux *mux.Router)
 }
 ```
 
@@ -271,17 +271,18 @@ type UserAPI struct {
     service *UserService
 }
 
-func (api *UserAPI) RegisterHandler(mux *httprouter.Router) {
-    mux.GET("/users/:id", api.getUser)
-    mux.POST("/users", api.createUser)
+func (api *UserAPI) RegisterHandler(router *mux.Router) {
+    router.HandleFunc("/users/{id}", api.getUser).Methods(http.MethodGet)
+    router.HandleFunc("/users", api.createUser).Methods(http.MethodPost)
 }
 
-func (api *UserAPI) getUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    id := ps.ByName("id")
+func (api *UserAPI) getUser(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    id := vars["id"]
     // Handle request...
 }
 
-func (api *UserAPI) createUser(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (api *UserAPI) createUser(w http.ResponseWriter, r *http.Request) {
     // Handle request...
 }
 
@@ -424,7 +425,7 @@ import (
     "net/http"
     "time"
     
-    "github.com/julienschmidt/httprouter"
+    "github.com/gorilla/mux"
     "github.com/nmvalera/go-utils/app"
     "github.com/nmvalera/go-utils/app/svc"
     "go.uber.org/zap"
@@ -447,15 +448,15 @@ func (d *Database) Ready(ctx context.Context) error {
 }
 
 type UserAPI struct {
-    db *Database
+    db     *Database
 }
 
-func (api *UserAPI) RegisterHandler(mux *httprouter.Router) {
-    mux.GET("/users/:id", api.getUser)
+func (api *UserAPI) RegisterHandler(router *mux.Router) {
+    router.HandleFunc("/users/{id}", api.getUser).Methods(http.MethodGet)
 }
 
-func (api *UserAPI) getUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    api.logger.Info("Getting user", zap.String("id", ps.ByName("id")))
+func (api *UserAPI) getUser(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
     w.WriteHeader(http.StatusOK)
     w.Write([]byte(`{"id": "123", "name": "John Doe"}`))
 }
@@ -570,8 +571,8 @@ The `app` package integrates several production-ready libraries:
 - **[uber-go/zap](https://github.com/uber-go/zap)**: High-performance structured logging
   - *Rationale*: Zero-allocation, type-safe logging with excellent performance characteristics
 
-- **[julienschmidt/httprouter](https://github.com/julienschmidt/httprouter)**: High-performance HTTP router
-  - *Rationale*: Lightweight, fast, and supports path parameters without regex overhead
+- **[gorilla/mux](https://github.com/gorilla/mux)**: Powerful HTTP router and URL matcher
+  - *Rationale*: Feature-rich, flexible routing with path parameters, regular expressions, and middleware support
 
 - **[justinas/alice](https://github.com/justinas/alice)**: Middleware chaining
   - *Rationale*: Clean API for composing HTTP middleware in a type-safe manner

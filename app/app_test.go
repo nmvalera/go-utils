@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/nmvalera/go-utils/common"
 	"github.com/nmvalera/go-utils/log"
@@ -509,8 +509,8 @@ func TestMetrics(t *testing.T) {
 
 type healthzAPIService struct{}
 
-func (s *healthzAPIService) RegisterHealthzHandler(mux *httprouter.Router) {
-	mux.Handler(http.MethodGet, "/main-test", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+func (s *healthzAPIService) RegisterHealthzHandler(router *mux.Router) {
+	router.Path("/main-test").Methods(http.MethodGet).Handler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 }
@@ -589,8 +589,8 @@ func TestMiddlewareService(t *testing.T) {
 
 type healthzService struct{}
 
-func (s *healthzService) RegisterHealthzHandler(mux *httprouter.Router) {
-	mux.Handler(http.MethodGet, "/debug-test", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+func (s *healthzService) RegisterHealthzHandler(router *mux.Router) {
+	router.Path("/debug-test").Methods(http.MethodGet).Handler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 }

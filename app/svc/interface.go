@@ -3,7 +3,7 @@ package svc
 import (
 	"context"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/nmvalera/go-utils/tag"
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,12 +11,12 @@ import (
 
 // API is a service that exposes API routes
 type API interface {
-	RegisterHandler(mux *httprouter.Router)
+	RegisterHandler(mux *mux.Router)
 }
 
 // Healthz is a service that exposes healthz routes
 type Healthz interface {
-	RegisterHealthzHandler(mux *httprouter.Router)
+	RegisterHealthzHandler(mux *mux.Router)
 }
 
 // Runnable is an interface for any service that maintains long living task(s)
