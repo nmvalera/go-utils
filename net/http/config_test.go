@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -158,4 +159,14 @@ func TestUnmarshalFromDefaults(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, DefaultEntrypointConfig(), cfg)
+}
+
+func TestMarshalJSON(t *testing.T) {
+	cfg := DefaultEntrypointConfig()
+
+	data, err := json.Marshal(cfg)
+	require.NoError(t, err)
+
+	// Note: tls is omitted because it has no non-nil fields
+	assert.JSONEq(t, `{"ep":{"http":{"readTimeout":"30s","readHeaderTimeout":"30s","writeTimeout":"30s","idleTimeout":"30s","maxHeaderBytes":1048576},"net":{"keepAlive":"-1s","keepAliveProbe":{"enable":false,"idle":"15s","interval":"15s","count":9}}}}`, string(data))
 }
