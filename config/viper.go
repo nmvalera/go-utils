@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -50,14 +51,14 @@ func Unmarshal(cfg any, v *viper.Viper, opts ...viper.DecoderConfigOption) error
 
 // Env returns a map of environment variables for the given configuration object.
 // It uses the `env` struct field tag to get the environment variable name.
-func Env(cfg any, hook func(reflect.Value) (reflect.Value, error)) (map[string]string, error) {
-	if hook == nil {
-		hook = GlobalEncodeHook()
+func Env(cfg any, hooks ...EncodeHookFunc) (map[string]string, error) {
+	if len(hooks) == 0 {
+		hooks = []EncodeHookFunc{GlobalEncodeHook()}
 	}
 
 	inspector := NewInspector(&InspectorConfig{
 		TagNames:   []string{envTagName},
-		EncodeHook: hook,
+		EncodeHook: CombineHooks(hooks...),
 	})
 
 	infos, err := inspector.Inspect(cfg)
@@ -78,6 +79,60 @@ func Env(cfg any, hook func(reflect.Value) (reflect.Value, error)) (map[string]s
 	return m, nil
 }
 
+// Marshal marshals a configuration object to JSON using the `key` tag for field names.
+// It applies encode hooks to transform values before marshaling (e.g., converting enums to strings).
+func Marshal(cfg any, hooks ...EncodeHookFunc) ([]byte, error) {
+	if len(hooks) == 0 {
+		hooks = []EncodeHookFunc{GlobalEncodeHook()}
+	}
+
+	inspector := NewInspector(&InspectorConfig{
+		TagNames:   []string{keyTagName},
+		EncodeHook: CombineHooks(hooks...),
+		IncludeNil: false,
+	})
+
+	fields, err := inspector.Inspect(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("invalid configuration object: %w", err)
+	}
+
+	result := make(map[string]interface{})
+	for _, field := range fields {
+		if field.IsNil {
+			continue
+		}
+
+		// Get the key path from the tag
+		keyParts := field.TagParts[keyTagName]
+		if len(keyParts) == 0 {
+			continue
+		}
+
+		// Build the nested map structure
+		current := result
+		for i := 0; i < len(keyParts)-1; i++ {
+			key := keyParts[i]
+			if _, ok := current[key]; !ok {
+				current[key] = make(map[string]interface{})
+			}
+			if nested, ok := current[key].(map[string]interface{}); ok {
+				current = nested
+			}
+		}
+
+		// Set the final value using the processed value (with encode hooks applied)
+		finalKey := keyParts[len(keyParts)-1]
+		if field.Processed.IsValid() {
+			current[finalKey] = field.Processed.Interface()
+		} else {
+			current[finalKey] = field.Value.Interface()
+		}
+	}
+
+	return json.Marshal(result)
+}
+
 // AddFlags adds flags to the given viper and flag set.
 //
 // It uses the following struct field tags
@@ -88,14 +143,14 @@ func Env(cfg any, hook func(reflect.Value) (reflect.Value, error)) (map[string]s
 // - `key` struct field tag to get the key.
 //
 // It sets the default values as set on the defaultConfig object.
-func AddFlags(defaultConfig any, v *viper.Viper, f *pflag.FlagSet, hook func(reflect.Value) (reflect.Value, error)) error {
-	if hook == nil {
-		hook = GlobalEncodeHook()
+func AddFlags(defaultConfig any, v *viper.Viper, f *pflag.FlagSet, hooks ...EncodeHookFunc) error {
+	if len(hooks) == 0 {
+		hooks = []EncodeHookFunc{GlobalEncodeHook()}
 	}
 
 	inspector := NewInspector(&InspectorConfig{
 		TagNames:   []string{keyTagName, flagTagName, envTagName, descTagName, shortTagName},
-		EncodeHook: hook,
+		EncodeHook: CombineHooks(hooks...),
 		IncludeNil: true,
 	})
 

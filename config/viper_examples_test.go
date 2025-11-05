@@ -14,7 +14,7 @@ func ExampleEnv_basic() {
 	env, err := Env(&User{
 		Name: "John",
 		Age:  30,
-	}, nil)
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func ExampleEnv_nested() {
 			Name: "John",
 			Age:  30,
 		},
-	}, nil)
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -73,7 +73,7 @@ func ExampleEnv_nestedWithDefaultEnvNaming() {
 			Name: "Jane",
 			Age:  31,
 		},
-	}, nil)
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -109,7 +109,7 @@ func ExampleEnv_nestedWithSkipTag() {
 			Name: "Jane",
 			Age:  31,
 		},
-	}, nil)
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -146,7 +146,7 @@ func ExampleEnv_defaultEncodeHook() {
 		Name: "John",
 		Age:  30,
 		Role: Role(1),
-	}, nil)
+	})
 	if err != nil {
 		panic(err)
 	}

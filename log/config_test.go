@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/nmvalera/go-utils/common"
@@ -198,4 +199,43 @@ func TestUnmarshalFromDefaults(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, DefaultConfig(), cfg)
+}
+
+func TestMarshalJSON(t *testing.T) {
+	cfg := DefaultConfig()
+
+	data, err := json.Marshal(cfg)
+	require.NoError(t, err)
+
+	// Verify that the JSON uses camelCase field names (from `key` tag) and human-readable enum strings
+	jsonStr := string(data)
+	assert.JSONEq(t, `{
+		"format": "text",
+		"level": "info",
+		"enableStacktrace": false,
+		"enableCaller": false,
+		"encoding": {
+			"messageKey": "msg",
+			"levelKey": "level",
+			"timeKey": "ts",
+			"nameKey": "logger",
+			"callerKey": "caller",
+			"functionKey": "",
+			"stacktraceKey": "stacktrace",
+			"skipLineEnding": false,
+			"lineEnding": "\n",
+			"levelEncoder": "capitalColor",
+			"timeEncoder": "rfc3339",
+			"durationEncoder": "s",
+			"callerEncoder": "short",
+			"nameEncoder": "full",
+			"consoleSeparator": "\t"
+		},
+		"sampling": {
+			"initial": 100,
+			"thereafter": 100
+		},
+		"outputPaths": ["stderr"],
+		"errorOutputPaths": ["stderr"]
+	}`, jsonStr)
 }

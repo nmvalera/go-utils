@@ -51,7 +51,7 @@ func TestEnv(t *testing.T) {
 		MapStringInt:    map[string]int{"test1": 1, "test2": 2},
 	}
 
-	m, err := Env(cfg, nil)
+	m, err := Env(cfg)
 	require.NoError(t, err)
 
 	expected := map[string]string{
@@ -324,7 +324,7 @@ func nonDefaultCfg() *TestConfig {
 func TestAddFlagsAndLoad(t *testing.T) {
 	t.Run("FromDefault", func(t *testing.T) {
 		v := NewViper()
-		err := AddFlags(defaultCfg(), v, pflag.NewFlagSet("test", pflag.ContinueOnError), nil)
+		err := AddFlags(defaultCfg(), v, pflag.NewFlagSet("test", pflag.ContinueOnError))
 		require.NoError(t, err)
 
 		loadedCfg := new(TestConfig)
@@ -344,10 +344,10 @@ func TestAddFlagsAndLoad(t *testing.T) {
 				CustomIntDecodeHook,
 			)),
 		)
-		err := AddFlags(defaultCfg(), v, pflag.NewFlagSet("test", pflag.ContinueOnError), nil)
+		err := AddFlags(defaultCfg(), v, pflag.NewFlagSet("test", pflag.ContinueOnError))
 		require.NoError(t, err)
 
-		env, err := Env(nonDefaultCfg(), nil)
+		env, err := Env(nonDefaultCfg())
 		require.NoError(t, err)
 		for k, v := range env {
 			t.Setenv(k, v)
@@ -372,7 +372,7 @@ func TestAddFlagsAndLoad(t *testing.T) {
 		)
 
 		set := pflag.NewFlagSet("test", pflag.ContinueOnError)
-		err := AddFlags(defaultCfg(), v, set, nil)
+		err := AddFlags(defaultCfg(), v, set)
 		require.NoError(t, err)
 
 		require.NoError(t, set.Set("stringnonempty", "string-non-empty-flag-2"))

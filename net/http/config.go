@@ -42,6 +42,10 @@ type EntrypointConfig struct {
 	TLS  *TLSCertConfig `key:"tls,omitempty"`
 }
 
+func (cfg *EntrypointConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(&embedConfig{cfg})
+}
+
 func (cfg *EntrypointConfig) Entrypoint() (*Entrypoint, error) {
 	return NewEntrypoint(common.Val(cfg.Addr), WithServer(cfg.HTTP.Server()), WithListenConfig(cfg.Net.ListenConfig()))
 }
@@ -51,14 +55,18 @@ type TLSCertConfig struct {
 	KeyFile  *string `key:"keyFile,omitempty" env:"KEY_FILE" desc:"Path to the key file"`
 }
 
+func (cfg *TLSCertConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
+}
+
 type embedConfig struct {
 	EP *EntrypointConfig `key:"ep,omitempty"`
 }
 
 // Env returns the environment variables for the entrypoint config.
 // All environment variables are prefixed with "EP_".
-func (cfg *EntrypointConfig) Env() (map[string]string, error) {
-	return config.Env(&embedConfig{cfg}, nil)
+func (cfg *EntrypointConfig) Env(hooks ...config.EncodeHookFunc) (map[string]string, error) {
+	return config.Env(&embedConfig{cfg}, hooks...)
 }
 
 // Unmarshal unmarshals the given viper into the entrypoint config.
@@ -74,8 +82,8 @@ func (cfg *EntrypointConfig) Unmarshal(v *viper.Viper) error {
 // - all viper keys with "ep." prefix
 // - all environment variables with "EP_" prefix
 // - all flags with "ep-" prefix
-func AddFlags(v *viper.Viper, f *pflag.FlagSet) error {
-	return config.AddFlags(&embedConfig{DefaultEntrypointConfig()}, v, f, nil)
+func AddFlags(v *viper.Viper, f *pflag.FlagSet, hooks ...config.EncodeHookFunc) error {
+	return config.AddFlags(&embedConfig{DefaultEntrypointConfig()}, v, f, hooks...)
 }
 
 type ServerConfig struct {
@@ -84,6 +92,10 @@ type ServerConfig struct {
 	WriteTimeout      *time.Duration `key:"writeTimeout,omitempty" env:"WRITE_TIMEOUT" flag:"write-timeout" desc:"Maximum duration before timing out writes of the response (zero means no timeout)"`
 	IdleTimeout       *time.Duration `key:"idleTimeout,omitempty" env:"IDLE_TIMEOUT" flag:"idle-timeout" desc:"Maximum duration to wait for the next request when keep-alives are enabled (zero uses the value of read timeout)"`
 	MaxHeaderBytes    *int           `key:"maxHeaderBytes,omitempty" env:"MAX_HEADER_BYTES" flag:"max-header-bytes" desc:"Maximum number of bytes the server will read parsing the request header's keys and values, including the request line"`
+}
+
+func (cfg *ServerConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
 }
 
 func (cfg *ServerConfig) Server() *http.Server {
@@ -99,6 +111,10 @@ func (cfg *ServerConfig) Server() *http.Server {
 type ListenConfig struct {
 	KeepAlive      *time.Duration        `key:"keepAlive,omitempty" env:"KEEP_ALIVE" flag:"keep-alive" desc:"Keep alive period for network connections accepted by this entrypoint"`
 	KeepAliveProbe *KeepAliveProbeConfig `key:"keepAliveProbe,omitempty" env:"KEEP_ALIVE_PROBE" flag:"keep-alive-probe"`
+}
+
+func (cfg *ListenConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
 }
 
 func (cfg *ListenConfig) ListenConfig() *net.ListenConfig {
@@ -118,6 +134,10 @@ type KeepAliveProbeConfig struct {
 	Idle     *time.Duration `key:"idle,omitempty" desc:"Time that the connection must be idle before the first keep-alive probe is sent"`
 	Interval *time.Duration `key:"interval,omitempty" desc:"Time between keep-alive probes"`
 	Count    *int           `key:"count,omitempty" desc:"Maximum number of keep-alive probes that can go unanswered before dropping a connection"`
+}
+
+func (cfg *KeepAliveProbeConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
 }
 
 func (cfg *KeepAliveProbeConfig) KeepAliveProbe() *net.KeepAliveConfig {

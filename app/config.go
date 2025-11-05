@@ -38,15 +38,23 @@ type Config struct {
 	StopTimeout       *string                    `key:"stopTimeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
 }
 
+func (cfg *Config) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
+}
+
 type HealthzServerConfig struct {
 	LivenessPath  *string `key:"livenessPath" env:"LIVENESS_PATH" flag:"liveness-path" desc:"Path on which the liveness probe will be served"`
 	ReadinessPath *string `key:"readinessPath" env:"READINESS_PATH" flag:"readiness-path" desc:"Path on which the readiness probe will be served"`
 	MetricsPath   *string `key:"metricsPath" env:"METRICS_PATH" flag:"metrics-path" desc:"Path on which the metrics will be served"`
 }
 
+func (cfg *HealthzServerConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
+}
+
 // Env returns the environment variables for the given Config.
-func (cfg *Config) Env() (map[string]string, error) {
-	return config.Env(cfg, nil)
+func (cfg *Config) Env(hooks ...config.EncodeHookFunc) (map[string]string, error) {
+	return config.Env(cfg, hooks...)
 }
 
 // Unmarshal unmarshals the given viper into the Config.
@@ -55,6 +63,6 @@ func (cfg *Config) Unmarshal(v *viper.Viper) error {
 }
 
 // AddFlags adds flags to the given viper and pflag.FlagSet.
-func AddFlags(v *viper.Viper, f *pflag.FlagSet) error {
-	return config.AddFlags(DefaultConfig(), v, f, nil)
+func AddFlags(v *viper.Viper, f *pflag.FlagSet, hooks ...config.EncodeHookFunc) error {
+	return config.AddFlags(DefaultConfig(), v, f, hooks...)
 }

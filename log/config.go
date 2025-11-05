@@ -1,6 +1,7 @@
 package log
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -108,6 +109,10 @@ type Config struct {
 	ErrorOutputPaths *[]*string      `key:"errorOutputPaths,omitempty" env:"ERROR_OUTPUT_PATHS" flag:"err-output" desc:"List of URLs to write internal logger errors to"`
 }
 
+func (cfg *Config) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
+}
+
 func (cfg *Config) ZapConfig() *zap.Config {
 	return &zap.Config{
 		DisableStacktrace: !common.Val(cfg.EnableStacktrace),
@@ -130,8 +135,8 @@ type embedConfig struct {
 
 // Env returns the environment variables for the given Config.
 // All environment variables are prefixed with "LOG_".
-func (cfg *Config) Env() (map[string]string, error) {
-	return config.Env(&embedConfig{cfg}, nil)
+func (cfg *Config) Env(hooks ...config.EncodeHookFunc) (map[string]string, error) {
+	return config.Env(&embedConfig{cfg}, hooks...)
 }
 
 // Unmarshal unmarshals the given viper into the Config.
@@ -147,8 +152,8 @@ func (cfg *Config) Unmarshal(v *viper.Viper) error {
 // - all viper keys with "log." prefix
 // - all environment variables with "LOG_" prefix
 // - all flags with "log-" prefix
-func AddFlags(v *viper.Viper, f *pflag.FlagSet) error {
-	return config.AddFlags(&embedConfig{DefaultConfig()}, v, f, nil)
+func AddFlags(v *viper.Viper, f *pflag.FlagSet, hooks ...config.EncodeHookFunc) error {
+	return config.AddFlags(&embedConfig{DefaultConfig()}, v, f, hooks...)
 }
 
 type EncoderConfig struct {
@@ -167,6 +172,10 @@ type EncoderConfig struct {
 	CallerEncoder    *CallerEncoder   `key:"callerEncoder,omitempty" env:"CALLER_ENCODER" flag:"caller-encoder" desc:"Primitive representation for the log caller (e.g. 'full', 'short')"`
 	NameEncoder      *NameEncoder     `key:"nameEncoder,omitempty" env:"NAME_ENCODER" flag:"name-encoder" desc:"Primitive representation for the log logger name (e.g. 'full', 'short')"`
 	ConsoleSeparator *string          `key:"consoleSeparator,omitempty" env:"CONSOLE_SEPARATOR" flag:"console-separator" desc:"Field separator used by the console encoder"`
+}
+
+func (cfg *EncoderConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
 }
 
 func (cfg *EncoderConfig) EncoderConfig() *zapcore.EncoderConfig {
@@ -194,6 +203,10 @@ type SamplingConfig struct {
 	Thereafter *int `key:"thereafter,omitempty" desc:"After the initial number of entries, every Mth entry is logged and the rest are dropped"`
 }
 
+func (cfg *SamplingConfig) MarshalJSON() ([]byte, error) {
+	return config.Marshal(cfg)
+}
+
 var unknown = "unknown"
 
 type Level int
@@ -203,6 +216,10 @@ func (l Level) String() string {
 		return levelsStr[l]
 	}
 	return unknown
+}
+
+func (l Level) MarshalJSON() ([]byte, error) {
+	return json.Marshal(l.String())
 }
 
 const (
@@ -249,6 +266,10 @@ func (f Format) String() string {
 	return unknown
 }
 
+func (f Format) MarshalJSON() ([]byte, error) {
+	return json.Marshal(f.String())
+}
+
 const (
 	TextFormat Format = iota
 	JSONFormat
@@ -283,6 +304,10 @@ func (l LevelEncoder) String() string {
 		return levelEncodersStr[l]
 	}
 	return unknown
+}
+
+func (l LevelEncoder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(l.String())
 }
 
 const (
@@ -327,6 +352,10 @@ func (t TimeEncoder) String() string {
 		return timeEncodersStr[t]
 	}
 	return unknown
+}
+
+func (t TimeEncoder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
 }
 
 const (
@@ -381,6 +410,10 @@ func (d DurationEncoder) String() string {
 	return unknown
 }
 
+func (d DurationEncoder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.String())
+}
+
 const (
 	DurationEncoderString DurationEncoder = iota
 	DurationEncoderNanos
@@ -425,6 +458,10 @@ func (c CallerEncoder) String() string {
 	return unknown
 }
 
+func (c CallerEncoder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.String())
+}
+
 const (
 	CallerEncoderFull CallerEncoder = iota
 	CallerEncoderShort
@@ -459,6 +496,10 @@ func (n NameEncoder) String() string {
 		return nameEncodersStr[n]
 	}
 	return unknown
+}
+
+func (n NameEncoder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(n.String())
 }
 
 const (
