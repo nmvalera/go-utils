@@ -100,12 +100,12 @@ func DefaultConfig() *Config {
 type Config struct {
 	Format           *Format         `key:"format,omitempty" desc:"Log format"`
 	Level            *Level          `key:"level,omitempty" desc:"Minimum enabled logging level"`
-	EnableStacktrace *bool           `key:"enable-stacktrace,omitempty" env:"ENABLE_STACKTRACE" flag:"enable-stacktrace" desc:"Enable automatic stacktrace capturing"`
-	EnableCaller     *bool           `key:"enable-caller,omitempty" env:"ENABLE_CALLER" flag:"enable-caller" desc:"Enable caller"`
+	EnableStacktrace *bool           `key:"enableStacktrace,omitempty" env:"ENABLE_STACKTRACE" flag:"enable-stacktrace" desc:"Enable automatic stacktrace capturing"`
+	EnableCaller     *bool           `key:"enableCaller,omitempty" env:"ENABLE_CALLER" flag:"enable-caller" desc:"Enable caller"`
 	Encoder          *EncoderConfig  `key:"encoding,omitempty" flag:"encoding" env:"ENCODING" desc:"Encoding: "`
 	Sampling         *SamplingConfig `key:"sampling,omitempty" desc:"Sampling: "`
-	OutputPaths      *[]*string      `key:"output-paths,omitempty" env:"OUTPUT_PATHS" flag:"output" desc:"List of URLs or file paths to write logging output to"`
-	ErrorOutputPaths *[]*string      `key:"error-output-paths,omitempty" env:"ERROR_OUTPUT_PATHS" flag:"err-output" desc:"List of URLs to write internal logger errors to"`
+	OutputPaths      *[]*string      `key:"outputPaths,omitempty" env:"OUTPUT_PATHS" flag:"output" desc:"List of URLs or file paths to write logging output to"`
+	ErrorOutputPaths *[]*string      `key:"errorOutputPaths,omitempty" env:"ERROR_OUTPUT_PATHS" flag:"err-output" desc:"List of URLs to write internal logger errors to"`
 }
 
 func (cfg *Config) ZapConfig() *zap.Config {
@@ -152,21 +152,21 @@ func AddFlags(v *viper.Viper, f *pflag.FlagSet) error {
 }
 
 type EncoderConfig struct {
-	MessageKey       *string          `key:"message-key,omitempty" env:"MESSAGE_KEY" flag:"message-key" desc:"Key for the log message (if empty, the message is omitted)"`
-	LevelKey         *string          `key:"level-key,omitempty" env:"LEVEL_KEY" flag:"level-key" desc:"Key for the log level (if empty, the level is omitted)"`
-	TimeKey          *string          `key:"time-key,omitempty" env:"TIME_KEY" flag:"time-key" desc:"Key for the log timestamp (if empty, the timestamp is omitted)"`
-	NameKey          *string          `key:"name-key,omitempty" env:"NAME_KEY" flag:"name-key" desc:"Key for the log logger name (if empty, the logger name is omitted)"`
-	CallerKey        *string          `key:"caller-key,omitempty" env:"CALLER_KEY" flag:"caller-key" desc:"Key for the log caller (if empty, the caller is omitted)"`
-	FunctionKey      *string          `key:"function-key,omitempty" env:"FUNCTION_KEY" flag:"function-key" desc:"Key for the log function (if empty, the function is omitted)"`
-	StacktraceKey    *string          `key:"stacktrace-key,omitempty" env:"STACKTRACE_KEY" flag:"stacktrace-key" desc:"Key for the log stacktrace (if empty, the stacktrace is omitted)"`
-	SkipLineEnding   *bool            `key:"skip-line-ending,omitempty" env:"SKIP_LINE_ENDING" flag:"skip-line-ending" desc:"Skip the line ending"`
-	LineEnding       *string          `key:"line-ending,omitempty" env:"LINE_ENDING" flag:"line-ending" desc:"Line ending"`
-	LevelEncoder     *LevelEncoder    `key:"level-encoder,omitempty" env:"LEVEL_ENCODER" flag:"level-encoder" desc:"Primitive representation for the log level (e.g. 'capital', 'color', 'capitalColor', 'lowercase')"`
-	TimeEncoder      *TimeEncoder     `key:"time-encoder,omitempty" env:"TIME_ENCODER" flag:"time-encoder" desc:"Primitive representation for the log timestamp (e.g. 'rfc3339nano', 'rfc3339', 'iso8601', 'millis', 'nanos', 'time')"`
-	DurationEncoder  *DurationEncoder `key:"duration-encoder,omitempty" env:"DURATION_ENCODER" flag:"duration-encoder" desc:"Primitive representation for the log duration (e.g. 'string', 'nanos', 'ms', 's')"`
-	CallerEncoder    *CallerEncoder   `key:"caller-encoder,omitempty" env:"CALLER_ENCODER" flag:"caller-encoder" desc:"Primitive representation for the log caller (e.g. 'full', 'short')"`
-	NameEncoder      *NameEncoder     `key:"name-encoder,omitempty" env:"NAME_ENCODER" flag:"name-encoder" desc:"Primitive representation for the log logger name (e.g. 'full', 'short')"`
-	ConsoleSeparator *string          `key:"console-separator,omitempty" env:"CONSOLE_SEPARATOR" flag:"console-separator" desc:"Field separator used by the console encoder"`
+	MessageKey       *string          `key:"messageKey,omitempty" env:"MESSAGE_KEY" flag:"message-key" desc:"Key for the log message (if empty, the message is omitted)"`
+	LevelKey         *string          `key:"levelKey,omitempty" env:"LEVEL_KEY" flag:"level-key" desc:"Key for the log level (if empty, the level is omitted)"`
+	TimeKey          *string          `key:"timeKey,omitempty" env:"TIME_KEY" flag:"time-key" desc:"Key for the log timestamp (if empty, the timestamp is omitted)"`
+	NameKey          *string          `key:"nameKey,omitempty" env:"NAME_KEY" flag:"name-key" desc:"Key for the log logger name (if empty, the logger name is omitted)"`
+	CallerKey        *string          `key:"callerKey,omitempty" env:"CALLER_KEY" flag:"caller-key" desc:"Key for the log caller (if empty, the caller is omitted)"`
+	FunctionKey      *string          `key:"functionKey,omitempty" env:"FUNCTION_KEY" flag:"function-key" desc:"Key for the log function (if empty, the function is omitted)"`
+	StacktraceKey    *string          `key:"stacktraceKey,omitempty" env:"STACKTRACE_KEY" flag:"stacktrace-key" desc:"Key for the log stacktrace (if empty, the stacktrace is omitted)"`
+	SkipLineEnding   *bool            `key:"skipLineEnding,omitempty" env:"SKIP_LINE_ENDING" flag:"skip-line-ending" desc:"Skip the line ending"`
+	LineEnding       *string          `key:"lineEnding,omitempty" env:"LINE_ENDING" flag:"line-ending" desc:"Line ending"`
+	LevelEncoder     *LevelEncoder    `key:"levelEncoder,omitempty" env:"LEVEL_ENCODER" flag:"level-encoder" desc:"Primitive representation for the log level (e.g. 'capital', 'color', 'capitalColor', 'lowercase')"`
+	TimeEncoder      *TimeEncoder     `key:"timeEncoder,omitempty" env:"TIME_ENCODER" flag:"time-encoder" desc:"Primitive representation for the log timestamp (e.g. 'rfc3339nano', 'rfc3339', 'iso8601', 'millis', 'nanos', 'time')"`
+	DurationEncoder  *DurationEncoder `key:"durationEncoder,omitempty" env:"DURATION_ENCODER" flag:"duration-encoder" desc:"Primitive representation for the log duration (e.g. 'string', 'nanos', 'ms', 's')"`
+	CallerEncoder    *CallerEncoder   `key:"callerEncoder,omitempty" env:"CALLER_ENCODER" flag:"caller-encoder" desc:"Primitive representation for the log caller (e.g. 'full', 'short')"`
+	NameEncoder      *NameEncoder     `key:"nameEncoder,omitempty" env:"NAME_ENCODER" flag:"name-encoder" desc:"Primitive representation for the log logger name (e.g. 'full', 'short')"`
+	ConsoleSeparator *string          `key:"consoleSeparator,omitempty" env:"CONSOLE_SEPARATOR" flag:"console-separator" desc:"Field separator used by the console encoder"`
 }
 
 func (cfg *EncoderConfig) EncoderConfig() *zapcore.EncoderConfig {

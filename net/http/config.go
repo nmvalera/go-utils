@@ -47,8 +47,8 @@ func (cfg *EntrypointConfig) Entrypoint() (*Entrypoint, error) {
 }
 
 type TLSCertConfig struct {
-	CertFile *string `key:"cert-file,omitempty" env:"CERT_FILE" desc:"Path to the certificate file"`
-	KeyFile  *string `key:"key-file,omitempty" env:"KEY_FILE" desc:"Path to the key file"`
+	CertFile *string `key:"certFile,omitempty" env:"CERT_FILE" desc:"Path to the certificate file"`
+	KeyFile  *string `key:"keyFile,omitempty" env:"KEY_FILE" desc:"Path to the key file"`
 }
 
 type embedConfig struct {
@@ -79,11 +79,11 @@ func AddFlags(v *viper.Viper, f *pflag.FlagSet) error {
 }
 
 type ServerConfig struct {
-	ReadTimeout       *time.Duration `key:"read-timeout,omitempty" env:"READ_TIMEOUT" flag:"read-timeout" desc:"Maximum duration for reading the entire request including the body (zero means no timeout)"`
-	ReadHeaderTimeout *time.Duration `key:"read-header-timeout,omitempty" env:"READ_HEADER_TIMEOUT" flag:"read-header-timeout" desc:"Maximum duration for reading request headers (zero uses the value of read timeout)"`
-	WriteTimeout      *time.Duration `key:"write-timeout,omitempty" env:"WRITE_TIMEOUT" flag:"write-timeout" desc:"Maximum duration before timing out writes of the response (zero means no timeout)"`
-	IdleTimeout       *time.Duration `key:"idle-timeout,omitempty" env:"IDLE_TIMEOUT" flag:"idle-timeout" desc:"Maximum duration to wait for the next request when keep-alives are enabled (zero uses the value of read timeout)"`
-	MaxHeaderBytes    *int           `key:"max-header-bytes,omitempty" env:"MAX_HEADER_BYTES" flag:"max-header-bytes" desc:"Maximum number of bytes the server will read parsing the request header's keys and values, including the request line"`
+	ReadTimeout       *time.Duration `key:"readTimeout,omitempty" env:"READ_TIMEOUT" flag:"read-timeout" desc:"Maximum duration for reading the entire request including the body (zero means no timeout)"`
+	ReadHeaderTimeout *time.Duration `key:"readHeaderTimeout,omitempty" env:"READ_HEADER_TIMEOUT" flag:"read-header-timeout" desc:"Maximum duration for reading request headers (zero uses the value of read timeout)"`
+	WriteTimeout      *time.Duration `key:"writeTimeout,omitempty" env:"WRITE_TIMEOUT" flag:"write-timeout" desc:"Maximum duration before timing out writes of the response (zero means no timeout)"`
+	IdleTimeout       *time.Duration `key:"idleTimeout,omitempty" env:"IDLE_TIMEOUT" flag:"idle-timeout" desc:"Maximum duration to wait for the next request when keep-alives are enabled (zero uses the value of read timeout)"`
+	MaxHeaderBytes    *int           `key:"maxHeaderBytes,omitempty" env:"MAX_HEADER_BYTES" flag:"max-header-bytes" desc:"Maximum number of bytes the server will read parsing the request header's keys and values, including the request line"`
 }
 
 func (cfg *ServerConfig) Server() *http.Server {
@@ -97,8 +97,8 @@ func (cfg *ServerConfig) Server() *http.Server {
 }
 
 type ListenConfig struct {
-	KeepAlive      *time.Duration        `key:"keep-alive,omitempty" env:"KEEP_ALIVE" flag:"keep-alive" desc:"Keep alive period for network connections accepted by this entrypoint"`
-	KeepAliveProbe *KeepAliveProbeConfig `key:"keep-alive-probe,omitempty" env:"KEEP_ALIVE_PROBE" flag:"keep-alive-probe"`
+	KeepAlive      *time.Duration        `key:"keepAlive,omitempty" env:"KEEP_ALIVE" flag:"keep-alive" desc:"Keep alive period for network connections accepted by this entrypoint"`
+	KeepAliveProbe *KeepAliveProbeConfig `key:"keepAliveProbe,omitempty" env:"KEEP_ALIVE_PROBE" flag:"keep-alive-probe"`
 }
 
 func (cfg *ListenConfig) ListenConfig() *net.ListenConfig {
