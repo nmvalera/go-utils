@@ -80,22 +80,24 @@ func TestEncoder(t *testing.T) {
 	}
 
 	type TestConfig struct {
-		Bool               bool             `foo:"bool"`
-		String             string           `foo:"string"`
-		NilStringPtr       *string          `foo:"nil_string_ptr"`
-		Ints               IntsConfig       `foo:"ints"`
-		Uints              UintsConfig      `foo:"uints"`
-		Floats             FloatsConfig     `foo:"floats"`
-		Ptr                *PtrConfig       `foo:"ptr"`
-		Array              [2]string        `foo:"array"`
-		Slice              []string         `foo:"slice"`
-		Custom             CustomInt        `foo:"custom"`
-		CustomIntNil       *CustomInt       `foo:"custom_int_nil"`
-		ArrayCustom        [2]CustomInt     `foo:"array_custom"`
-		SliceCustom        []*CustomInt     `foo:"slice_custom"`
-		Interface          Interface        `foo:"interface"`
-		CustomInterface    *CustomInterface `foo:"custom_interface"`
-		CustomInterfaceNil *CustomInterface `foo:"custom_interface_nil"`
+		Bool               bool              `foo:"bool"`
+		String             string            `foo:"string"`
+		NilStringPtr       *string           `foo:"nil_string_ptr"`
+		Ints               IntsConfig        `foo:"ints"`
+		Uints              UintsConfig       `foo:"uints"`
+		Floats             FloatsConfig      `foo:"floats"`
+		Ptr                *PtrConfig        `foo:"ptr"`
+		Array              [2]string         `foo:"array"`
+		Slice              []string          `foo:"slice"`
+		Custom             CustomInt         `foo:"custom"`
+		CustomIntNil       *CustomInt        `foo:"custom_int_nil"`
+		ArrayCustom        [2]CustomInt      `foo:"array_custom"`
+		SliceCustom        []*CustomInt      `foo:"slice_custom"`
+		Interface          Interface         `foo:"interface"`
+		CustomInterface    *CustomInterface  `foo:"custom_interface"`
+		CustomInterfaceNil *CustomInterface  `foo:"custom_interface_nil"`
+		MapStringString    map[string]string `foo:"map_string_string"`
+		MapStringInt       map[string]int    `foo:"map_string_int"`
 	}
 
 	cfg := TestConfig{
@@ -135,6 +137,8 @@ func TestEncoder(t *testing.T) {
 		},
 		Interface:       &CustomInterface{},
 		CustomInterface: &CustomInterface{},
+		MapStringString: map[string]string{"test1": "test2"},
+		MapStringInt:    map[string]int{"test1": 1, "test2": 2},
 	}
 
 	enc, err := inspector.Inspect(cfg)
@@ -316,6 +320,20 @@ func TestEncoder(t *testing.T) {
 			Value:      reflect.ValueOf((*CustomInterface)(nil)),
 			Processed:  reflect.ValueOf("<nil>"),
 			Encoded:    "<nil>",
+		},
+		"MapStringString": {
+			FieldParts: []string{"MapStringString"},
+			TagParts:   map[string][]string{"foo": {"map_string_string"}},
+			Value:      reflect.ValueOf(map[string]string{"test1": "test2"}),
+			Processed:  reflect.ValueOf(map[string]string{"test1": "test2"}),
+			Encoded:    "test1:test2",
+		},
+		"MapStringInt": {
+			FieldParts: []string{"MapStringInt"},
+			TagParts:   map[string][]string{"foo": {"map_string_int"}},
+			Value:      reflect.ValueOf(map[string]int{"test1": 1, "test2": 2}),
+			Processed:  reflect.ValueOf(map[string]string{"test1": "1", "test2": "2"}),
+			Encoded:    "test1:1 test2:2",
 		},
 	}
 	require.Len(t, enc, len(expected))

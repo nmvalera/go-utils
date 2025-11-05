@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -75,7 +76,7 @@ func (i *Inspector) inspect(fieldParts []string, val reflect.Value, m map[string
 	processedKind := getKind(processedVal.Kind())
 
 	switch processedKind {
-	case reflect.Bool, reflect.Int, reflect.Uint, reflect.Float32, reflect.String, reflect.Array, reflect.Slice:
+	case reflect.Bool, reflect.Int, reflect.Uint, reflect.Float32, reflect.String, reflect.Array, reflect.Slice, reflect.Map:
 		// we encode the value so we get the processed value and the encoded string
 		processedVal, encoded, err := i.encodeValue(processedVal)
 		if err != nil {
@@ -258,6 +259,8 @@ func (i *Inspector) encodeValue(val reflect.Value) (reflect.Value, string, error
 		return processedElem, encodedElem, nil
 	case reflect.Array, reflect.Slice:
 		return i.encodeArrayValue(processedVal)
+	case reflect.Map:
+		return i.encodeMapValue(processedVal)
 	}
 
 	return reflect.Value{}, "", fmt.Errorf("unsupported type: %v", kind)
@@ -294,4 +297,42 @@ func (i *Inspector) encodeArrayValue(val reflect.Value) (processedVal reflect.Va
 	}
 
 	return processedElems, strings.Join(encodedElems, envSliceSep), nil
+}
+
+// encodeMapValue encodes the given map value and returns the processed value and the encoded string
+// The map is encoded by encoding each of its values and creating a map[string]string
+// The encoded string is in the format "key1:value1 key2:value2" with keys sorted alphabetically
+func (i *Inspector) encodeMapValue(val reflect.Value) (processedVal reflect.Value, encoded string, err error) {
+	// we create a new map with string keys and string values
+	processedMap := reflect.MakeMap(reflect.MapOf(reflect.TypeOf(""), reflect.TypeOf("")))
+
+	// Get all keys and sort them to ensure deterministic output
+	keys := val.MapKeys()
+	keyStrs := make([]string, len(keys))
+	keyMap := make(map[string]reflect.Value)
+	for i, key := range keys {
+		keyStr := key.String()
+		keyStrs[i] = keyStr
+		keyMap[keyStr] = key
+	}
+	sort.Strings(keyStrs)
+
+	// we iterate through the sorted keys and encode each value
+	encodedPairs := make([]string, 0, val.Len())
+	for _, keyStr := range keyStrs {
+		mapVal := val.MapIndex(keyMap[keyStr])
+
+		_, encodedElem, err := i.encodeValue(mapVal)
+		if err != nil {
+			return reflect.Value{}, "", err
+		}
+
+		// store in processed map as string
+		processedMap.SetMapIndex(reflect.ValueOf(keyStr), reflect.ValueOf(encodedElem))
+
+		// add to encoded pairs
+		encodedPairs = append(encodedPairs, fmt.Sprintf("%s:%s", keyStr, encodedElem))
+	}
+
+	return processedMap, strings.Join(encodedPairs, envSliceSep), nil
 }

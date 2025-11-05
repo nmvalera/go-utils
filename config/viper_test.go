@@ -29,6 +29,9 @@ func TestEnv(t *testing.T) {
 		Flag10 []*string `key:"flag10" env:"FLAG10" desc:"Flag 10" short:"j"`
 
 		NestedWithSkip NestedConfig `key:"nested-with-skip" env:"-" flag:"-"`
+
+		MapStringString map[string]string `key:"map_string_string" env:"MAP_STRING_STRING" desc:"Map string string" short:"k"`
+		MapStringInt    map[string]int    `key:"map_string_int" env:"MAP_STRING_INT" desc:"Map string int" short:"l"`
 	}
 
 	cfg := &TestConfig{
@@ -38,20 +41,30 @@ func TestEnv(t *testing.T) {
 		Nested: NestedConfig{
 			Flag7: "test7",
 		},
+		Flag8:  []string{"test8-1", "test8-2"},
+		Flag9:  [2]string{"test9-1", "test9-2"},
+		Flag10: []*string{common.Ptr("test10-1"), nil, common.Ptr("test10-2")},
 		NestedWithSkip: NestedConfig{
 			Flag7: "test7",
 		},
+		MapStringString: map[string]string{"test1": "test2"},
+		MapStringInt:    map[string]int{"test1": 1, "test2": 2},
 	}
 
 	m, err := Env(cfg, nil)
 	require.NoError(t, err)
 
 	expected := map[string]string{
-		"FLAG1":        "test1",
-		"FLAG2":        "10",
-		"FLAG3":        "true",
-		"NESTED_FLAG7": "test7",
-		"FLAG7":        "test7",
+		"FLAG1":             "test1",
+		"FLAG2":             "10",
+		"FLAG3":             "true",
+		"NESTED_FLAG7":      "test7",
+		"FLAG8":             "test8-1 test8-2",
+		"FLAG9":             "test9-1 test9-2",
+		"FLAG10":            "test10-1 <nil> test10-2",
+		"FLAG7":             "test7",
+		"MAP_STRING_STRING": "test1:test2",
+		"MAP_STRING_INT":    "test1:1 test2:2",
 	}
 	assert.Equal(t, expected, m)
 }
@@ -148,6 +161,9 @@ type TestConfig struct {
 	NestedNonEmpty    NestedConfig
 	NestedEmpty       NestedConfig
 	NestedPtrNonEmpty *NestedConfig
+
+	MapStringString map[string]string
+	MapStringInt    map[string]int
 }
 
 func defaultCfg() *TestConfig {
@@ -222,6 +238,8 @@ func defaultCfg() *TestConfig {
 		},
 		NestedEmpty:       NestedConfig{},
 		NestedPtrNonEmpty: &NestedConfig{},
+		MapStringString:   map[string]string{"test1": "test2"},
+		MapStringInt:      map[string]int{"test1": 1, "test2": 2},
 	}
 }
 
@@ -298,6 +316,8 @@ func nonDefaultCfg() *TestConfig {
 		},
 		NestedEmpty:       NestedConfig{},
 		NestedPtrNonEmpty: &NestedConfig{},
+		MapStringString:   map[string]string{"test1-non-default": "test2-non-default"},
+		MapStringInt:      map[string]int{"test1": 3, "test2-non-default": 2},
 	}
 }
 
@@ -318,6 +338,7 @@ func TestAddFlagsAndLoad(t *testing.T) {
 			viper.WithDecodeHook(mapstructure.ComposeDecodeHookFunc(
 				PtrToValueDecodeHookFunc(),
 				StringToWeakSliceDecodeHookFunc(envSliceSep),
+				StringToMapDecodeHookFunc(envSliceSep),
 				NilStrToNilDecodeHookFunc(nilStr),
 				mapstructure.StringToTimeDurationHookFunc(),
 				CustomIntDecodeHook,
@@ -343,6 +364,7 @@ func TestAddFlagsAndLoad(t *testing.T) {
 			viper.WithDecodeHook(mapstructure.ComposeDecodeHookFunc(
 				PtrToValueDecodeHookFunc(),
 				StringToWeakSliceDecodeHookFunc(envSliceSep),
+				StringToMapDecodeHookFunc(envSliceSep),
 				NilStrToNilDecodeHookFunc(nilStr),
 				mapstructure.StringToTimeDurationHookFunc(),
 				CustomIntDecodeHook,
@@ -399,6 +421,8 @@ func TestAddFlagsAndLoad(t *testing.T) {
 		require.NoError(t, set.Set("nestednonempty-string", "nested-non-empty-string-flag-2"))
 		require.NoError(t, set.Set("nestednonempty-uint64ptr", "56"))
 		require.NoError(t, set.Set("nestedptrnonempty-string", "nested-ptr-non-empty-string-flag-2"))
+		require.NoError(t, set.Set("mapstringstring", "test1-non-default:test2-non-default"))
+		require.NoError(t, set.Set("mapstringint", "test1:3,test2-non-default:2"))
 
 		expectedCfg := &TestConfig{
 			StringNonEmpty:    "string-non-empty-flag-2",
@@ -466,6 +490,8 @@ func TestAddFlagsAndLoad(t *testing.T) {
 			NestedPtrNonEmpty: &NestedConfig{
 				String: "nested-ptr-non-empty-string-flag-2",
 			},
+			MapStringString: map[string]string{"test1-non-default": "test2-non-default"},
+			MapStringInt:    map[string]int{"test1": 3, "test2-non-default": 2},
 		}
 
 		loadedCfg := new(TestConfig)
