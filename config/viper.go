@@ -204,6 +204,13 @@ func AddFlags(defaultConfig any, v *viper.Viper, f *pflag.FlagSet, hook func(ref
 			default:
 				return fmt.Errorf("%v: unsupported array element type %s", field, elemKind)
 			}
+		case reflect.Map:
+			// Maps are processed as map[string]string and encoded as a string slice
+			encoded := []string{}
+			if info.Encoded != "" {
+				encoded = strings.Split(info.Encoded, envSliceSep)
+			}
+			f.StringSlice(flagName, encoded, usage)
 		default:
 			return fmt.Errorf("%v: unsupported type %s", field, info.Processed.Kind())
 		}
