@@ -66,7 +66,7 @@ func (i *Inspector) inspect(fieldParts []string, val reflect.Value, m map[string
 	// we process the value so in case a EncodeHook has been set for the value, it is applied
 	var err error
 	processedVal := val
-	if !isNil && i.cfg.EncodeHook != nil {
+	if i.cfg.EncodeHook != nil {
 		processedVal, err = i.cfg.EncodeHook(val)
 		if err != nil {
 			return fmt.Errorf("%s: failed to process value: %w", join(fieldParts), err)
