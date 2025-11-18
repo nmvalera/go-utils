@@ -117,7 +117,11 @@ func (app *App) provide(id string, constructor func() (any, error), opts ...Serv
 	}
 
 	if srvc, ok := app.services[id]; ok {
-		app.current.addDep(srvc) // current can not be nil here
+		if app.current != nil {
+			// we are under construction so we add a dependency
+			app.current.addDep(srvc)
+		}
+		// we are not constructing so we simply return the value
 		return srvc.value
 	}
 

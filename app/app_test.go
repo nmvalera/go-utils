@@ -309,6 +309,19 @@ func TestAppWithDeps(t *testing.T) {
 	assert.Nil(t, <-recStop)
 }
 
+func TestServiceCanBeRetrievedBeforeConstruction(t *testing.T) {
+	app := newTestApp(t)
+	myDep := func() string {
+		return Provide(app, "dep", func() (string, error) { return "test-dep", nil })
+	}
+	myMain := func() string {
+		return Provide(app, "main", func() (string, error) { return fmt.Sprintf("test-main with dep: %s", myDep()), nil })
+	}
+
+	assert.Equal(t, myMain(), "test-main with dep: test-dep")
+	assert.Equal(t, myDep(), "test-dep")
+}
+
 func TestServiceError(t *testing.T) {
 	svc := newService("svc", nil)
 	dep1 := newService("dep1", nil)
