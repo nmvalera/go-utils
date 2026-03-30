@@ -79,6 +79,6 @@ func WithTags(tags ...*tag.Tag) ServiceOption {
 func WithComponentName(name string) ServiceOption {
 	return func(s *service) error {
 		s.name = name
-		return WithTags(tag.Key("component").String(name))(s)
+		return nil
 	}
 }

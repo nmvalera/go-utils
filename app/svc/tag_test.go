@@ -10,10 +10,10 @@ import (
 
 func TestTagged(t *testing.T) {
 	type service struct {
-		*Tagged
+		Tagged
 	}
 
-	testSvc := &service{Tagged: NewTagged()}
+	testSvc := &service{}
 
 	testSvc.WithTags(tag.Key("test-key").String("test-value"))
 

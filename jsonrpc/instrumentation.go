@@ -13,11 +13,7 @@ import (
 
 type tagged struct {
 	client Client
-	tagged *svc.Tagged
-}
-
-func (t *tagged) WithTags(tags ...*tag.Tag) {
-	t.tagged.WithTags(tags...)
+	svc.Tagged
 }
 
 func (t *tagged) Call(ctx context.Context, req *Request, res interface{}) error {
@@ -28,7 +24,7 @@ func (t *tagged) Call(ctx context.Context, req *Request, res interface{}) error 
 		tag.Key("req.id").Object(req.ID),
 	}
 
-	ctx = t.tagged.Context(ctx, tags...)
+	ctx = t.Context(ctx, tags...)
 
 	return t.client.Call(ctx, req, res)
 }
@@ -43,7 +39,6 @@ func (t *tagged) Call(ctx context.Context, req *Request, res interface{}) error 
 func WithTags(client Client) Client {
 	return &tagged{
 		client: client,
-		tagged: svc.NewTagged(),
 	}
 }
 

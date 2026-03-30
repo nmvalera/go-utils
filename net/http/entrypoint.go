@@ -9,7 +9,6 @@ import (
 
 	"github.com/nmvalera/go-utils/app/svc"
 	"github.com/nmvalera/go-utils/log"
-	"github.com/nmvalera/go-utils/tag"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +27,7 @@ type Entrypoint struct {
 	done   chan struct{}
 	srvErr error
 
-	tagged *svc.Tagged
+	*svc.RunContext
 }
 
 type EntrypointOption func(*Entrypoint) error
@@ -49,14 +48,6 @@ func WithListenConfig(lCfg *net.ListenConfig) EntrypointOption {
 	}
 }
 
-// WithTags sets the tags to use for the entrypoint.
-func WithTags(tags ...*tag.Tag) EntrypointOption {
-	return func(ep *Entrypoint) error {
-		ep.WithTags(tags...)
-		return nil
-	}
-}
-
 // WithTLSConfig sets the tls.Config to use for the entrypoint.
 func WithTLSConfig(tlsCfg *TLSCertConfig) EntrypointOption {
 	return func(ep *Entrypoint) error {
@@ -68,10 +59,10 @@ func WithTLSConfig(tlsCfg *TLSCertConfig) EntrypointOption {
 // NewEntrypoint creates a new Entrypoint.
 func NewEntrypoint(addr string, opts ...EntrypointOption) (*Entrypoint, error) {
 	ep := &Entrypoint{
-		addr:   addr,
-		lCfg:   &net.ListenConfig{},
-		server: &http.Server{},
-		tagged: svc.NewTagged(),
+		addr:       addr,
+		lCfg:       &net.ListenConfig{},
+		server:     &http.Server{},
+		RunContext: &svc.RunContext{},
 	}
 
 	for _, opt := range opts {
@@ -83,19 +74,10 @@ func NewEntrypoint(addr string, opts ...EntrypointOption) (*Entrypoint, error) {
 	baseCtxFunc := ep.server.BaseContext
 	if baseCtxFunc == nil {
 		ep.server.BaseContext = func(_ net.Listener) context.Context {
-			return ep.context(context.Background())
-		}
-	} else {
-		ep.server.BaseContext = func(l net.Listener) context.Context {
-			return ep.context(baseCtxFunc(l))
+			return ep.Context()
 		}
 	}
-
 	return ep, nil
-}
-
-func (ep *Entrypoint) context(ctx context.Context) context.Context {
-	return ep.tagged.Context(ctx)
 }
 
 // Addr returns the address the entrypoint is exposed to after Start() is called.
@@ -120,8 +102,6 @@ func (ep *Entrypoint) Server() *http.Server {
 
 // Start starts the entrypoint.
 func (ep *Entrypoint) Start(ctx context.Context) error {
-	ctx = ep.context(ctx)
-
 	// Open connection and return possibly error
 	l, err := ep.listen(ctx)
 	if err != nil {
@@ -141,8 +121,6 @@ func (ep *Entrypoint) Start(ctx context.Context) error {
 
 // Stop stops the entrypoint.
 func (ep *Entrypoint) Stop(ctx context.Context) error {
-	ctx = ep.context(ctx)
-
 	logger := log.LoggerFromContext(ctx)
 	logger.Info("Entrypoint gracefully stopping...")
 
@@ -168,7 +146,7 @@ func (ep *Entrypoint) Stop(ctx context.Context) error {
 }
 
 func (ep *Entrypoint) listen(ctx context.Context) (net.Listener, error) {
-	logger := ep.logger(ctx)
+	logger := log.LoggerFromContext(ctx)
 
 	logger.Info(
 		"Open entrypoint on local network",
@@ -188,7 +166,7 @@ func (ep *Entrypoint) listen(ctx context.Context) (net.Listener, error) {
 
 // serve serves incoming HTTP requests.
 func (ep *Entrypoint) serve(ctx context.Context, l net.Listener) error {
-	logger := ep.logger(ctx)
+	logger := log.LoggerFromContext(ctx)
 
 	logger.Info("Entrypoint is accepting and serving incoming HTTP requests...")
 	ep.done = make(chan struct{})
@@ -205,7 +183,7 @@ func (ep *Entrypoint) serve(ctx context.Context, l net.Listener) error {
 }
 
 func (ep *Entrypoint) serveTLS(ctx context.Context, l net.Listener) error {
-	logger := ep.logger(ctx)
+	logger := log.LoggerFromContext(ctx)
 	if ep.tlsCfg.CertFile == nil {
 		return errors.New("cert file is required")
 	}
@@ -228,16 +206,7 @@ func (ep *Entrypoint) serveTLS(ctx context.Context, l net.Listener) error {
 	return nil
 }
 
-func (ep *Entrypoint) logger(ctx context.Context) *zap.Logger {
-	return log.LoggerFromContext(ep.context(ctx))
-}
-
 // Ready returns the error from Serve(...) if it's not nil.
 func (ep *Entrypoint) Ready(_ context.Context) error {
 	return ep.srvErr
-}
-
-// WithTags sets the tags for the entrypoint.
-func (ep *Entrypoint) WithTags(tags ...*tag.Tag) {
-	ep.tagged.WithTags(tags...)
 }

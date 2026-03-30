@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/nmvalera/go-utils/common"
-	"github.com/nmvalera/go-utils/tag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,13 +53,6 @@ func TestOptions(t *testing.T) {
 		ep, err := NewEntrypoint("", WithListenConfig(lCfg))
 		require.NoError(t, err)
 		assert.Equal(t, lCfg, ep.lCfg)
-	})
-
-	t.Run("WithTags", func(t *testing.T) {
-		ep, err := NewEntrypoint("", WithTags(tag.Key("test-key").String("test-value")))
-		require.NoError(t, err)
-		require.Len(t, ep.tagged.Set, 1)
-		assert.Equal(t, tag.Key("test-key").String("test-value"), ep.tagged.Set[0])
 	})
 
 	t.Run("WithTLSConfig", func(t *testing.T) {

@@ -2,30 +2,22 @@ package svc
 
 import (
 	"context"
-	"sync"
 
 	"github.com/nmvalera/go-utils/tag"
 )
 
 // Tagged enable to attach tags to a service
 type Tagged struct {
-	mux sync.RWMutex
-	tag.Set
-}
-
-// NewTagged creates a new Tagged with the given tags
-func NewTagged(tags ...*tag.Tag) *Tagged {
-	return &Tagged{Set: tag.Set(tags)}
+	set tag.Set
 }
 
 func (t *Tagged) WithTags(tags ...*tag.Tag) {
-	t.mux.Lock()
-	t.Set = t.Set.WithTags(tags...)
-	t.mux.Unlock()
+	if t.set == nil {
+		t.set = tag.EmptySet
+	}
+	t.set = t.set.WithTags(tags...)
 }
 
 func (t *Tagged) Context(ctx context.Context, tags ...*tag.Tag) context.Context {
-	t.mux.RLock()
-	defer t.mux.RUnlock()
-	return tag.WithTags(ctx, append(t.Set, tags...)...)
+	return tag.WithTags(ctx, append(t.set, tags...)...)
 }
