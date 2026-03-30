@@ -65,6 +65,16 @@ type Taggable interface {
 	WithTags(tags ...*tag.Tag)
 }
 
+// RunContextAware is a service that needs a long-lived run context.
+// The run context is set before Start() is called and lives until after Stop() completes.
+// It is enriched with app and service tags, and canceled after Stop() returns.
+//
+// SetRunContext is called by the App before Start() so the context is immediately
+// available to goroutines spawned during Start().
+type RunContextAware interface {
+	SetRunContext(ctx context.Context)
+}
+
 // Middleware is a service that exposes a middleware to be set on an App
 type Middleware interface {
 	RegisterMiddleware(chain alice.Chain) alice.Chain

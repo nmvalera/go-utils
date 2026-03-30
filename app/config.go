@@ -30,12 +30,15 @@ func DefaultConfig() *Config {
 
 // Config is the configuration for the application.
 type Config struct {
+	Name              *string                    `key:"name" env:"NAME" flag:"name" desc:"Application name"`
+	Version           *string                    `key:"version" env:"VERSION" flag:"version" desc:"Application version"`
 	MainEntrypoint    *kkrthttp.EntrypointConfig `key:"mainEp" env:"MAIN_EP" flag:"main-ep" desc:"main entrypoint: "`
 	HealthzEntrypoint *kkrthttp.EntrypointConfig `key:"healthzEp" env:"HEALTHZ_EP" flag:"healthz-ep" desc:"healthz entrypoint: "`
 	HealthzServer     *HealthzServerConfig       `key:"healthzApi" env:"HEALTHZ_API" flag:"healthz-api" desc:"healthz API: "`
 	Log               *log.Config                `key:"log"`
 	StartTimeout      *string                    `key:"startTimeout" env:"START_TIMEOUT" flag:"start-timeout" desc:"Start timeout"`
 	StopTimeout       *string                    `key:"stopTimeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
+	Tags              map[string]string          `key:"tags" env:"TAGS" flag:"tags" desc:"Tags to attach to contexts (key=value pairs)"`
 }
 
 func (cfg *Config) MarshalJSON() ([]byte, error) {

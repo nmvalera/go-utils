@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -606,6 +607,249 @@ func (s *healthzService) RegisterHealthzHandler(router *mux.Router) {
 	router.Path("/debug-test").Methods(http.MethodGet).Handler(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
+}
+
+type runContextService struct {
+	start chan error
+	stop  chan error
+
+	runCtx    context.Context
+	runCtxMux sync.Mutex
+}
+
+func (s *runContextService) SetRunContext(ctx context.Context) {
+	s.runCtxMux.Lock()
+	defer s.runCtxMux.Unlock()
+	s.runCtx = ctx
+}
+
+func (s *runContextService) getRunCtx() context.Context {
+	s.runCtxMux.Lock()
+	defer s.runCtxMux.Unlock()
+	return s.runCtx
+}
+
+func (s *runContextService) Start(_ context.Context) error {
+	return <-s.start
+}
+
+func (s *runContextService) Stop(_ context.Context) error {
+	return <-s.stop
+}
+
+func TestRunContext(t *testing.T) {
+	t.Run("set before start and alive during run", func(t *testing.T) {
+		app := newTestApp(t)
+
+		start, stop := make(chan error), make(chan error)
+		defer close(start)
+		defer close(stop)
+
+		svc := &runContextService{start: start, stop: stop}
+		Provide(app, "test", func() (*runContextService, error) {
+			return svc, nil
+		})
+
+		recStart := make(chan error)
+		go func() {
+			recStart <- app.Start(context.Background())
+		}()
+
+		// Run context should be set before Start completes (it's set before Start is called)
+		// We need to let Start proceed
+		start <- nil
+		require.NoError(t, <-recStart)
+
+		// Run context should be set and not canceled
+		runCtx := svc.getRunCtx()
+		require.NotNil(t, runCtx)
+		assert.NoError(t, runCtx.Err())
+
+		// Verify tags are present
+		tags := tag.FromContext(runCtx)
+		assert.NotEmpty(t, tags)
+
+		recStop := make(chan error)
+		go func() {
+			recStop <- app.Stop(context.Background())
+		}()
+
+		// Run context should still be alive during Stop
+		time.Sleep(50 * time.Millisecond)
+		assert.NoError(t, runCtx.Err())
+
+		stop <- nil
+		require.NoError(t, <-recStop)
+
+		// Run context should be canceled after Stop completes
+		assert.Error(t, runCtx.Err())
+		assert.Equal(t, context.Canceled, runCtx.Err())
+	})
+
+	t.Run("canceled on start failure", func(t *testing.T) {
+		app := newTestApp(t)
+
+		start, stop := make(chan error), make(chan error)
+		defer close(start)
+		defer close(stop)
+
+		svc := &runContextService{start: start, stop: stop}
+		Provide(app, "test", func() (*runContextService, error) {
+			return svc, nil
+		})
+
+		recStart := make(chan error)
+		go func() {
+			recStart <- app.Start(context.Background())
+		}()
+
+		start <- errors.New("start failed")
+		require.Error(t, <-recStart)
+
+		// Run context should be canceled after start failure
+		runCtx := svc.getRunCtx()
+		require.NotNil(t, runCtx)
+		assert.Error(t, runCtx.Err())
+	})
+
+	t.Run("non RunContextAware service unaffected", func(t *testing.T) {
+		app := newTestApp(t)
+
+		start, stop := make(chan error), make(chan error)
+		defer close(start)
+		defer close(stop)
+
+		svc := &testService{start: start, stop: stop}
+		Provide(app, "test", func() (*testService, error) {
+			return svc, nil
+		})
+
+		recStart := make(chan error)
+		go func() {
+			recStart <- app.Start(context.Background())
+		}()
+		start <- nil
+		require.NoError(t, <-recStart)
+
+		recStop := make(chan error)
+		go func() {
+			recStop <- app.Stop(context.Background())
+		}()
+		stop <- nil
+		require.NoError(t, <-recStop)
+	})
+
+	t.Run("config tags in run context", func(t *testing.T) {
+		cfg := &Config{
+			MainEntrypoint: &kkrthttp.EntrypointConfig{
+				HTTP: &kkrthttp.ServerConfig{
+					ReadTimeout:       common.Ptr(time.Second),
+					ReadHeaderTimeout: common.Ptr(time.Second),
+					WriteTimeout:      common.Ptr(time.Second),
+					IdleTimeout:       common.Ptr(time.Second),
+				},
+				Net: &kkrthttp.ListenConfig{
+					KeepAlive: common.Ptr(time.Second),
+				},
+			},
+			HealthzEntrypoint: &kkrthttp.EntrypointConfig{
+				HTTP: &kkrthttp.ServerConfig{
+					ReadTimeout:       common.Ptr(time.Second),
+					ReadHeaderTimeout: common.Ptr(time.Second),
+					WriteTimeout:      common.Ptr(time.Second),
+					IdleTimeout:       common.Ptr(time.Second),
+				},
+				Net: &kkrthttp.ListenConfig{
+					KeepAlive: common.Ptr(time.Second),
+				},
+			},
+			HealthzServer: &HealthzServerConfig{
+				LivenessPath:  common.Ptr("/live"),
+				ReadinessPath: common.Ptr("/ready"),
+				MetricsPath:   common.Ptr("/metrics"),
+			},
+			Log: log.DefaultConfig(),
+			Tags: map[string]string{
+				"env":     "production",
+				"cluster": "us-east-1",
+			},
+		}
+		app, err := NewApp(cfg, WithLogger(zap.NewNop()), WithName("myapp"), WithVersion("1.0.0"))
+		require.NoError(t, err)
+
+		start, stop := make(chan error), make(chan error)
+		defer close(start)
+		defer close(stop)
+
+		rcSvc := &runContextService{start: start, stop: stop}
+		Provide(app, "test", func() (*runContextService, error) {
+			return rcSvc, nil
+		})
+
+		recStart := make(chan error)
+		go func() {
+			recStart <- app.Start(context.Background())
+		}()
+		start <- nil
+		require.NoError(t, <-recStart)
+
+		runCtx := rcSvc.getRunCtx()
+		require.NotNil(t, runCtx)
+
+		// Verify all tags are present in the run context
+		tags := tag.FromContext(runCtx)
+		tagMap := make(map[string]string)
+		for _, t := range tags {
+			tagMap[string(t.Key)] = t.Value.String()
+		}
+		assert.Equal(t, "myapp", tagMap["app"])
+		assert.Equal(t, "1.0.0", tagMap["version"])
+		assert.Equal(t, "production", tagMap["env"])
+		assert.Equal(t, "us-east-1", tagMap["cluster"])
+		// Service component tag should also be present
+		assert.Equal(t, "test", tagMap["component"])
+
+		recStop := make(chan error)
+		go func() {
+			recStop <- app.Stop(context.Background())
+		}()
+		stop <- nil
+		require.NoError(t, <-recStop)
+	})
+
+	t.Run("canceled on stop context timeout", func(t *testing.T) {
+		app := newTestApp(t)
+
+		start := make(chan error)
+		defer close(start)
+
+		rcSvc := &runContextService{start: start, stop: make(chan error)}
+		Provide(app, "test", func() (*runContextService, error) {
+			return rcSvc, nil
+		})
+
+		recStart := make(chan error)
+		go func() {
+			recStart <- app.Start(context.Background())
+		}()
+		start <- nil
+		require.NoError(t, <-recStart)
+
+		runCtx := rcSvc.getRunCtx()
+		require.NotNil(t, runCtx)
+		assert.NoError(t, runCtx.Err())
+
+		// Stop with a context that times out (Stop will block because stop channel is never fed)
+		stopCtx, stopCancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		defer stopCancel()
+
+		err := app.Stop(stopCtx)
+		require.Error(t, err)
+
+		// Run context should be canceled after stop context timeout
+		assert.Error(t, runCtx.Err())
+		assert.Equal(t, context.Canceled, runCtx.Err())
+	})
 }
 
 func TestHealthzService(t *testing.T) {

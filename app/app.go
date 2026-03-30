@@ -57,6 +57,11 @@ type App struct {
 	readyHealth *health.Health
 
 	prometheus *prometheus.Registry
+
+	tags tag.Set
+
+	runCtx    context.Context
+	runCancel context.CancelFunc
 }
 
 func NewApp(cfg *Config, opts ...Option) (*App, error) {
@@ -71,16 +76,37 @@ func NewApp(cfg *Config, opts ...Option) (*App, error) {
 		prometheus:     prometheus.NewRegistry(),
 	}
 
+	// Set name and version from config
+	if cfg.Name != nil {
+		app.name = *cfg.Name
+	}
+	if cfg.Version != nil {
+		app.version = *cfg.Version
+	}
+
 	logger, err := cfg.Log.ZapConfig().Build()
 	if err != nil {
 		return nil, err
 	}
 	app.logger = logger
 
+	// Options can override name/version from config
 	for _, opt := range opts {
 		if err := opt(app); err != nil {
 			return nil, err
 		}
+	}
+
+	// Build app-level tags: name, version, and user-configured tags
+	// User configured tags override name/version tags
+	if app.name != "" {
+		app.tags = app.tags.WithTags(tag.Key("app").String(app.name))
+	}
+	if app.version != "" {
+		app.tags = app.tags.WithTags(tag.Key("version").String(app.version))
+	}
+	for k, v := range cfg.Tags {
+		app.tags = app.tags.WithTags(tag.Key(k).String(v))
 	}
 
 	app.liveHealth = newHealth(app)
@@ -191,14 +217,22 @@ func (app *App) Context(ctx context.Context) context.Context {
 }
 
 func (app *App) context(ctx context.Context) context.Context {
-	return log.WithLogger(ctx, app.logger)
+	ctx = log.WithLogger(ctx, app.logger)
+	if len(app.tags) > 0 {
+		ctx = tag.WithTags(ctx, app.tags...)
+	}
+	return ctx
 }
 
 func (app *App) Start(ctx context.Context) error {
 	logger := app.getLogger("")
 	logger.Info("System starting...")
+
+	app.runCtx, app.runCancel = context.WithCancel(context.Background())
+
 	err := app.start(app.context(ctx))
 	if err != nil {
+		app.runCancel()
 		logger.Error("System failed to start", zap.Error(err))
 		return err
 	}
@@ -228,7 +262,21 @@ func (app *App) start(ctx context.Context) error {
 func (app *App) Stop(ctx context.Context) error {
 	logger := app.getLogger("")
 	logger.Info("System stopping...")
-	err := app.stop(app.context(ctx))
+
+	done := make(chan error, 1)
+	go func() {
+		done <- app.stop(app.context(ctx))
+	}()
+
+	var err error
+	select {
+	case err = <-done:
+	case <-ctx.Done():
+		err = ctx.Err()
+	}
+
+	app.runCancel()
+
 	if err != nil {
 		logger.Error("System failed to stop", zap.Error(err))
 		return err
@@ -374,20 +422,22 @@ type service struct {
 	stopOnce sync.Once
 	stopChan chan struct{}
 
-	name          string
-	tags          tag.Set
-	healthConfig  *health.Config
-	metricsPrefix string
+	name            string
+	tags            tag.Set
+	healthConfig    *health.Config
+	metricsPrefix   string
+	runContextAware svc.RunContextAware
 }
 
 func newService(id string, constructor func() (any, error), opts ...ServiceOption) *service {
 	s := &service{
 		id:           id,
+		name:         id,
 		constructor:  constructor,
 		deps:         make(map[string]*service),
 		depsOf:       make(map[string]*service),
 		stopChan:     make(chan struct{}),
-		tags:         tag.EmptySet.WithTags(tag.Key("component").String(id)),
+		tags:         tag.EmptySet,
 		healthConfig: new(health.Config),
 	}
 
@@ -401,12 +451,20 @@ func newService(id string, constructor func() (any, error), opts ...ServiceOptio
 	return s
 }
 
+func (s *service) getTags() tag.Set {
+	return s.tags.WithTags(tag.Key("component").String(s.name).Chained(true))
+}
+
 func (s *service) context(ctx context.Context) context.Context {
-	return tag.WithTags(ctx, s.tags...)
+	return tag.WithTags(ctx, s.getTags()...)
+}
+
+func (s *service) ID() string {
+	return s.id
 }
 
 func (s *service) Name() string {
-	return s.id
+	return s.name
 }
 
 func (s *service) Status() ServiceStatus {
@@ -456,7 +514,7 @@ func (s *service) construct() {
 	}
 
 	if t, ok := val.(svc.Taggable); ok {
-		t.WithTags(s.tags...)
+		t.WithTags(s.getTags()...)
 	}
 
 	switch v := val.(type) {
@@ -476,6 +534,10 @@ func (s *service) construct() {
 
 	if t, ok := val.(svc.Healthz); ok {
 		t.RegisterHealthzHandler(s.app.healthzRouter)
+	}
+
+	if rca, ok := val.(svc.RunContextAware); ok {
+		s.runContextAware = rca
 	}
 
 	s.value = val
@@ -564,6 +626,11 @@ func (s *service) start(ctx context.Context) *ServiceError {
 
 		// If all dependencies started successfully then start the service
 		if s.err == nil {
+			// Set the run context before Start so it is available to goroutines spawned during Start
+			if s.runContextAware != nil {
+				s.runContextAware.SetRunContext(s.context(s.app.context(s.app.runCtx)))
+			}
+
 			if start, ok := s.value.(svc.Runnable); ok {
 				logger := s.getLogger()
 				logger.Info("Service starting...")
@@ -692,7 +759,7 @@ func (s *service) setMetrics() {
 		if subsystem == "" {
 			subsystem = s.id
 		}
-		m.SetMetrics(sanitizeMetricName(s.app.name), sanitizeMetricName(subsystem), s.tags...)
+		m.SetMetrics(sanitizeMetricName(s.app.name), sanitizeMetricName(subsystem), s.getTags()...)
 	}
 }
 
