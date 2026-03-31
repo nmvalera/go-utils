@@ -31,14 +31,14 @@ func TestContextWithTags(t *testing.T) {
 }
 
 func TestContextWithComponent(t *testing.T) {
-	ctx := WithComponent(context.Background(), "component1")
+	ctx := WithComponent(context.Background(), "component1", true)
 
 	set := FromContext(ctx)
 	assert.Equal(t, 1, len(set))
 	assert.Equal(t, "component", string(set[0].Key))
 	assert.Equal(t, "component1", set[0].Value.Interface.(string))
 
-	ctx = WithComponent(ctx, "component2")
+	ctx = WithComponent(ctx, "component2", true)
 	set = FromContext(ctx)
 	assert.Equal(t, 1, len(set))
 	assert.Equal(t, "component", string(set[0].Key))

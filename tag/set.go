@@ -8,40 +8,40 @@ type Set []*Tag
 // WithTags returns a new set with the given tags added to the set. If a tag with the same key already exists in the set,
 // the new tag will replace the old tag.
 func (s Set) WithTags(tags ...*Tag) Set {
-	copySet := make(Set, len(s))
+	result := make(Set, len(s))
 	for i, t := range s {
-		copySet[i] = t.Copy()
+		result[i] = t.Copy()
 	}
 
 	newTags := make(Set, 0)
 	for _, tag := range tags {
 		var existed bool
-		for i, oldTag := range s {
+		for i, oldTag := range result {
 			if oldTag.Key == tag.Key {
-				copySet[i] = merge(copySet[i], tag)
+				result[i] = merge(oldTag, tag)
 				existed = true
 				break
 			}
 		}
 		if !existed {
-			newTags = append(newTags, tag)
+			newTags = append(newTags, tag.Copy())
 		}
 	}
 
-	return append(copySet, newTags...)
+	return append(result, newTags...)
 }
 
-func merge(cpyTag, newTag *Tag) *Tag {
-	if cpyTag.chained != nil && *cpyTag.chained {
-		if cpyTag.Value.Type == STRING {
-			cpyTag.Value.Interface = cpyTag.Value.Interface.(string) + "." + newTag.Value.Interface.(string)
-			// If the newtag has a chain flag set, we propagate it to the cpyTag
-			if newTag.chained != nil {
-				cpyTag.chained = newTag.chained
+func merge(oldTag, newTag *Tag) *Tag {
+	if newTag.chained != nil && *newTag.chained {
+		if oldTag.Value.Type == STRING {
+			chained := true
+			return &Tag{
+				Key:     oldTag.Key,
+				Value:   StringValue(oldTag.Value.Interface.(string) + "." + newTag.Value.Interface.(string)),
+				chained: &chained,
 			}
-			return cpyTag
 		}
 		panic("cannot chain non-string values")
 	}
-	return newTag
+	return newTag.Copy()
 }

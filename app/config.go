@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	"github.com/nmvalera/go-utils/common"
 	"github.com/nmvalera/go-utils/config"
 	"github.com/nmvalera/go-utils/log"
@@ -23,8 +25,8 @@ func DefaultConfig() *Config {
 			MetricsPath:   common.Ptr("/metrics"),
 		},
 		Log:          log.DefaultConfig(),
-		StartTimeout: common.Ptr("10s"),
-		StopTimeout:  common.Ptr("10s"),
+		StartTimeout: common.Ptr(15 * time.Second),
+		StopTimeout:  common.Ptr(15 * time.Second),
 	}
 }
 
@@ -36,8 +38,8 @@ type Config struct {
 	HealthzEntrypoint *kkrthttp.EntrypointConfig `key:"healthzEp" env:"HEALTHZ_EP" flag:"healthz-ep" desc:"healthz entrypoint: "`
 	HealthzServer     *HealthzServerConfig       `key:"healthzApi" env:"HEALTHZ_API" flag:"healthz-api" desc:"healthz API: "`
 	Log               *log.Config                `key:"log"`
-	StartTimeout      *string                    `key:"startTimeout" env:"START_TIMEOUT" flag:"start-timeout" desc:"Start timeout"`
-	StopTimeout       *string                    `key:"stopTimeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
+	StartTimeout      *time.Duration             `key:"startTimeout" env:"START_TIMEOUT" flag:"start-timeout" desc:"Start timeout"`
+	StopTimeout       *time.Duration             `key:"stopTimeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
 	Tags              map[string]string          `key:"tags" env:"TAGS" flag:"tags" desc:"Tags to attach to contexts (key=value pairs)"`
 }
 

@@ -82,3 +82,17 @@ func WithComponentName(name string) ServiceOption {
 		return nil
 	}
 }
+
+// WithComponentNameChained sets the chained name of the component.
+// If chained is true, the component name will be chained to the existing component name.
+// If chained is false, the component name will replace the existing component name.
+//
+// Example:
+// WithComponentNameChained(true) will return a new context with the component tag "component1.component2"
+// WithComponentNameChained(false) will return a new context with the component tag "component2"
+func WithComponentNameChained(chained bool) ServiceOption {
+	return func(s *service) error {
+		s.chainedName = chained
+		return nil
+	}
+}
