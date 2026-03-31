@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/nmvalera/go-utils/app"
@@ -36,7 +37,7 @@ func main() {
 		return &MyService{}, nil
 	})
 
-	err = a.Run()
+	err = a.Run(context.Background())
 	if err != nil {
 		panic(fmt.Sprintf("Failed to run app: %v", err))
 	}

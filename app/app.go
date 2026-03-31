@@ -303,8 +303,8 @@ func (app *App) stop(ctx context.Context) error {
 	return nil
 }
 
-func (app *App) Run() error {
-	err := app.Start(context.Background())
+func (app *App) Run(ctx context.Context) error {
+	err := app.Start(ctx)
 	if err != nil {
 		return err
 	}
@@ -316,7 +316,7 @@ func (app *App) Run() error {
 
 	app.stopListeningSignals()
 
-	return app.Stop(context.Background())
+	return app.Stop(ctx)
 }
 
 func (app *App) listenSignals() {
