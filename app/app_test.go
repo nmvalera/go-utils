@@ -13,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
+	"github.com/nmvalera/go-utils/app/svc"
 	"github.com/nmvalera/go-utils/common"
 	"github.com/nmvalera/go-utils/log"
 	kkrthttp "github.com/nmvalera/go-utils/net/http"
@@ -52,7 +53,9 @@ func newTestApp(t *testing.T) *App {
 			ReadinessPath: common.Ptr("/ready"),
 			MetricsPath:   common.Ptr("/metrics"),
 		},
-		Log: log.DefaultConfig(),
+		Log:          log.DefaultConfig(),
+		StartTimeout: common.Ptr(15 * time.Second),
+		StopTimeout:  common.Ptr(15 * time.Second),
 	}
 	app, err := NewApp(
 		cfg,
@@ -324,13 +327,13 @@ func TestServiceCanBeRetrievedBeforeConstruction(t *testing.T) {
 }
 
 func TestServiceError(t *testing.T) {
-	svc := newService("svc", nil)
+	rootSvc := newService("svc", nil)
 	dep1 := newService("dep1", nil)
 	dep2 := newService("dep2", nil)
 	dep11 := newService("dep11", nil)
 	dep21 := newService("dep21", nil)
 
-	svcErr := svc.fail(errors.New("error on svc"))
+	svcErr := rootSvc.fail(errors.New("error on svc"))
 	dep1Err := dep1.fail(nil)
 	dep2Err := dep2.fail(errors.New("error on dep2"))
 	dep1Err.addDepsErr(dep11.fail(errors.New("error on dep11")))
@@ -645,9 +648,9 @@ func TestRunContext(t *testing.T) {
 		defer close(start)
 		defer close(stop)
 
-		svc := &runContextService{start: start, stop: stop}
+		rcSvc := &runContextService{start: start, stop: stop}
 		Provide(app, "test", func() (*runContextService, error) {
-			return svc, nil
+			return rcSvc, nil
 		})
 
 		recStart := make(chan error)
@@ -661,7 +664,7 @@ func TestRunContext(t *testing.T) {
 		require.NoError(t, <-recStart)
 
 		// Run context should be set and not canceled
-		runCtx := svc.getRunCtx()
+		runCtx := rcSvc.getRunCtx()
 		require.NotNil(t, runCtx)
 		assert.NoError(t, runCtx.Err())
 
@@ -693,9 +696,9 @@ func TestRunContext(t *testing.T) {
 		defer close(start)
 		defer close(stop)
 
-		svc := &runContextService{start: start, stop: stop}
+		rcSvc := &runContextService{start: start, stop: stop}
 		Provide(app, "test", func() (*runContextService, error) {
-			return svc, nil
+			return rcSvc, nil
 		})
 
 		recStart := make(chan error)
@@ -707,7 +710,7 @@ func TestRunContext(t *testing.T) {
 		require.Error(t, <-recStart)
 
 		// Run context should be canceled after start failure
-		runCtx := svc.getRunCtx()
+		runCtx := rcSvc.getRunCtx()
 		require.NotNil(t, runCtx)
 		assert.Error(t, runCtx.Err())
 	})
@@ -719,9 +722,9 @@ func TestRunContext(t *testing.T) {
 		defer close(start)
 		defer close(stop)
 
-		svc := &testService{start: start, stop: stop}
+		testSvc := &testService{start: start, stop: stop}
 		Provide(app, "test", func() (*testService, error) {
-			return svc, nil
+			return testSvc, nil
 		})
 
 		recStart := make(chan error)
@@ -768,7 +771,9 @@ func TestRunContext(t *testing.T) {
 				ReadinessPath: common.Ptr("/ready"),
 				MetricsPath:   common.Ptr("/metrics"),
 			},
-			Log: log.DefaultConfig(),
+			Log:          log.DefaultConfig(),
+			StartTimeout: common.Ptr(15 * time.Second),
+			StopTimeout:  common.Ptr(15 * time.Second),
 			Tags: map[string]string{
 				"env":     "production",
 				"cluster": "us-east-1",
@@ -850,6 +855,76 @@ func TestRunContext(t *testing.T) {
 		assert.Error(t, runCtx.Err())
 		assert.Equal(t, context.Canceled, runCtx.Err())
 	})
+}
+
+// childTaggedService implements svc.Taggable (tags applied at construct) and can enrich a parent run context.
+type childTaggedService struct {
+	svc.Tagged
+}
+
+type parentRunContextService struct {
+	svc.RunContext
+	child *childTaggedService
+
+	start chan error
+	stop  chan error
+}
+
+func (p *parentRunContextService) Start(_ context.Context) error {
+	return <-p.start
+}
+
+func (p *parentRunContextService) Stop(_ context.Context) error {
+	return <-p.stop
+}
+
+func TestRunContext_parentRunCtxChildChainedTags(t *testing.T) {
+	app := newTestApp(t)
+
+	start, stop := make(chan error), make(chan error)
+	defer close(start)
+	defer close(stop)
+
+	var parent *parentRunContextService
+	Provide(app, "parent", func() (*parentRunContextService, error) {
+		ch := Provide(app, "child", func() (*childTaggedService, error) {
+			return &childTaggedService{}, nil
+		}, WithComponentNameChained(true))
+		parent = &parentRunContextService{
+			child: ch,
+			start: start,
+			stop:  stop,
+		}
+		return parent, nil
+	})
+
+	recStart := make(chan error)
+	go func() {
+		recStart <- app.Start(context.Background())
+	}()
+	start <- nil
+	require.NoError(t, <-recStart)
+
+	require.NotNil(t, parent)
+	assert.Equal(t, "parent", getComponentTag(parent.Context()))
+	assert.Equal(t, "parent.child", getComponentTag(parent.child.Context(parent.Context())))
+	assert.Equal(t, "child", getComponentTag(parent.child.Context(context.Background())))
+
+	recStop := make(chan error)
+	go func() {
+		recStop <- app.Stop(context.Background())
+	}()
+	stop <- nil
+	require.NoError(t, <-recStop)
+}
+
+func getComponentTag(ctx context.Context) string {
+	for _, t := range tag.FromContext(ctx) {
+		if t.Key == "component" {
+			return t.Value.String()
+		}
+	}
+	return ""
 }
 
 func TestHealthzService(t *testing.T) {

@@ -10,6 +10,13 @@ type Tag struct {
 }
 
 // Chained flags the tag as chained.
+// If chained is true, the tag will be chained to the existing tag with the same key.
+// If chained is false, the tag will replace the existing tag with the same key.
+//
+// Example:
+// set := tag.EmptySet.WithTags(tag.Key("component").String("component1"))
+// newSet := set.WithTags(tag.Key("component").String("component2").Chained(true))
+// newSet will be [tag.Key("component").String("component1.component2")]
 func (t *Tag) Chained(b bool) *Tag {
 	t.chained = &b
 	return t

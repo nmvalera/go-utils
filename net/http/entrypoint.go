@@ -120,12 +120,12 @@ func (ep *Entrypoint) Start(ctx context.Context) error {
 }
 
 // Stop stops the entrypoint.
-func (ep *Entrypoint) Stop(ctx context.Context) error {
-	logger := log.LoggerFromContext(ctx)
+func (ep *Entrypoint) Stop(stopCtx context.Context) error {
+	logger := log.LoggerFromContext(stopCtx)
 	logger.Info("Entrypoint gracefully stopping...")
 
 	// Gracefully shutdown server
-	err := ep.server.Shutdown(ctx)
+	err := ep.server.Shutdown(stopCtx)
 	if err != nil {
 		logger.Error("Error while stopping entrypoint", zap.Error(err))
 		_ = ep.server.Close()
@@ -145,8 +145,8 @@ func (ep *Entrypoint) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (ep *Entrypoint) listen(ctx context.Context) (net.Listener, error) {
-	logger := log.LoggerFromContext(ctx)
+func (ep *Entrypoint) listen(startCtx context.Context) (net.Listener, error) {
+	logger := log.LoggerFromContext(startCtx)
 
 	logger.Info(
 		"Open entrypoint on local network",
@@ -154,7 +154,7 @@ func (ep *Entrypoint) listen(ctx context.Context) (net.Listener, error) {
 		zap.String("address", ep.addr),
 	)
 
-	l, err := ep.lCfg.Listen(ctx, "tcp", ep.addr)
+	l, err := ep.lCfg.Listen(startCtx, "tcp", ep.addr)
 	if err != nil {
 		ep.srvErr = err
 		logger.Error("Failed to open entrypoint on local network", zap.Error(err))
@@ -165,8 +165,8 @@ func (ep *Entrypoint) listen(ctx context.Context) (net.Listener, error) {
 }
 
 // serve serves incoming HTTP requests.
-func (ep *Entrypoint) serve(ctx context.Context, l net.Listener) error {
-	logger := log.LoggerFromContext(ctx)
+func (ep *Entrypoint) serve(startCtx context.Context, l net.Listener) error {
+	logger := log.LoggerFromContext(startCtx)
 
 	logger.Info("Entrypoint is accepting and serving incoming HTTP requests...")
 	ep.done = make(chan struct{})
@@ -182,8 +182,8 @@ func (ep *Entrypoint) serve(ctx context.Context, l net.Listener) error {
 	return nil
 }
 
-func (ep *Entrypoint) serveTLS(ctx context.Context, l net.Listener) error {
-	logger := log.LoggerFromContext(ctx)
+func (ep *Entrypoint) serveTLS(startCtx context.Context, l net.Listener) error {
+	logger := log.LoggerFromContext(startCtx)
 	if ep.tlsCfg.CertFile == nil {
 		return errors.New("cert file is required")
 	}

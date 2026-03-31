@@ -205,13 +205,6 @@ func (app *App) Error() error {
 	return app.top.err
 }
 
-func (app *App) getLogger(component string) *zap.Logger {
-	if component == "" {
-		return app.logger.With(zap.String("component", "system"))
-	}
-	return app.logger.With(zap.String("component", component))
-}
-
 func (app *App) Context(ctx context.Context) context.Context {
 	return app.context(ctx)
 }
@@ -225,12 +218,18 @@ func (app *App) context(ctx context.Context) context.Context {
 }
 
 func (app *App) Start(ctx context.Context) error {
-	logger := app.getLogger("")
+	startCtx, startCancel := context.WithTimeout(ctx, *app.cfg.StartTimeout)
+	defer startCancel()
+
+	startCtx = app.context(startCtx)
+
+	logger := log.LoggerFromContext(startCtx)
 	logger.Info("System starting...")
 
 	app.runCtx, app.runCancel = context.WithCancel(context.Background())
+	app.runCtx = app.context(app.runCtx)
 
-	err := app.start(app.context(ctx))
+	err := app.start(startCtx)
 	if err != nil {
 		app.runCancel()
 		logger.Error("System failed to start", zap.Error(err))
@@ -260,21 +259,26 @@ func (app *App) start(ctx context.Context) error {
 }
 
 func (app *App) Stop(ctx context.Context) error {
-	logger := app.getLogger("")
+	stopCtx, stopCancel := context.WithTimeout(ctx, *app.cfg.StopTimeout)
+	defer stopCancel()
+
+	stopCtx = app.context(stopCtx)
+	logger := log.LoggerFromContext(stopCtx)
 	logger.Info("System stopping...")
 
 	done := make(chan error, 1)
 	go func() {
-		done <- app.stop(app.context(ctx))
+		done <- app.stop(stopCtx)
 	}()
 
 	var err error
 	select {
 	case err = <-done:
-	case <-ctx.Done():
-		err = ctx.Err()
+	case <-stopCtx.Done():
+		err = stopCtx.Err()
 	}
 
+	// Cancel the run context
 	app.runCancel()
 
 	if err != nil {
@@ -299,8 +303,8 @@ func (app *App) stop(ctx context.Context) error {
 	return nil
 }
 
-func (app *App) Run(ctx context.Context) error {
-	err := app.Start(ctx)
+func (app *App) Run() error {
+	err := app.Start(context.Background())
 	if err != nil {
 		return err
 	}
@@ -308,11 +312,11 @@ func (app *App) Run(ctx context.Context) error {
 	app.listenSignals()
 
 	sig := <-app.done
-	app.getLogger("").Warn("Received signal", zap.String("signal", sig.String()))
+	log.LoggerFromContext(app.runCtx).Warn("Received signal", zap.String("signal", sig.String()))
 
 	app.stopListeningSignals()
 
-	return app.Stop(ctx)
+	return app.Stop(context.Background())
 }
 
 func (app *App) listenSignals() {
@@ -366,7 +370,7 @@ func (app *App) instrumentMiddleware() alice.Chain {
 	return alice.New(
 		// Log Requests on main router
 		httplog.LoggerWithConfig(httplog.LoggerConfig{
-			Formatter: httplogzap.ZapLogger(app.getLogger("system.main.entrypoint"), zapcore.InfoLevel, ""),
+			Formatter: httplogzap.ZapLogger(app.logger, zapcore.InfoLevel, ""),
 		}),
 		// Instrument main router with prometheus metrics
 		func(next http.Handler) http.Handler {
@@ -423,6 +427,7 @@ type service struct {
 	stopChan chan struct{}
 
 	name            string
+	chainedName     bool
 	tags            tag.Set
 	healthConfig    *health.Config
 	metricsPrefix   string
@@ -452,7 +457,7 @@ func newService(id string, constructor func() (any, error), opts ...ServiceOptio
 }
 
 func (s *service) getTags() tag.Set {
-	return s.tags.WithTags(tag.Key("component").String(s.name).Chained(true))
+	return s.tags.WithTags(ComponentTag(s.name).Chained(s.chainedName))
 }
 
 func (s *service) context(ctx context.Context) context.Context {
@@ -587,15 +592,7 @@ func (s *service) isCircularDependency(dep *service) bool {
 	return false
 }
 
-func (s *service) getLogger() *zap.Logger {
-	logger := s.app.getLogger("").With(zap.String("service.id", s.id))
-	if s.name != "" {
-		logger = logger.With(zap.String("service.name", s.name))
-	}
-	return logger
-}
-
-func (s *service) start(ctx context.Context) *ServiceError {
+func (s *service) start(startCtx context.Context) *ServiceError {
 	s.startOnce.Do(func() {
 		if s.err != nil {
 			return
@@ -612,7 +609,7 @@ func (s *service) start(ctx context.Context) *ServiceError {
 		for _, dep := range s.deps {
 			go func(dep *service) {
 				defer wg.Done()
-				if err := dep.start(ctx); err != nil {
+				if err := dep.start(startCtx); err != nil {
 					startErr.addDepsErr(err)
 				}
 			}(dep)
@@ -628,13 +625,13 @@ func (s *service) start(ctx context.Context) *ServiceError {
 		if s.err == nil {
 			// Set the run context before Start so it is available to goroutines spawned during Start
 			if s.runContextAware != nil {
-				s.runContextAware.SetRunContext(s.context(s.app.context(s.app.runCtx)))
+				s.runContextAware.SetRunContext(s.context(s.app.runCtx))
 			}
 
 			if start, ok := s.value.(svc.Runnable); ok {
-				logger := s.getLogger()
+				logger := log.LoggerFromContext(s.context(startCtx))
 				logger.Info("Service starting...")
-				err := start.Start(s.context(ctx))
+				err := start.Start(s.context(startCtx))
 				if err != nil {
 					s.failWithLock(err)
 					logger.Error("Service failed to start", zap.Error(err))
@@ -651,7 +648,7 @@ func (s *service) start(ctx context.Context) *ServiceError {
 	return s.err
 }
 
-func (s *service) stop(ctx context.Context) *ServiceError {
+func (s *service) stop(stopCtx context.Context) *ServiceError {
 	if s.err != nil {
 		return s.err
 	}
@@ -675,9 +672,9 @@ func (s *service) stop(ctx context.Context) *ServiceError {
 		}()
 
 		if stop, ok := s.value.(svc.Runnable); ok {
-			logger := s.getLogger()
+			logger := log.LoggerFromContext(s.context(stopCtx))
 			logger.Info("Service stopping...")
-			err := stop.Stop(s.context(ctx))
+			err := stop.Stop(s.context(stopCtx))
 			if err != nil {
 				s.failWithLock(err)
 				logger.Error("Service failed to stop", zap.Error(err))
@@ -697,7 +694,7 @@ func (s *service) stop(ctx context.Context) *ServiceError {
 		for _, dep := range s.deps {
 			go func(dep *service) {
 				defer wg.Done()
-				if err := dep.stop(ctx); err != nil {
+				if err := dep.stop(stopCtx); err != nil {
 					stopErr.addDepsErr(err)
 				}
 			}(dep)

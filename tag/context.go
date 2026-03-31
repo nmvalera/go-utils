@@ -35,6 +35,17 @@ func WithTags(ctx context.Context, tags ...*Tag) context.Context {
 }
 
 // WithComponent returns a new context with the component chained tag added to the default namespace set.
-func WithComponent(ctx context.Context, component string) context.Context {
-	return WithTags(ctx, Key("component").String(component).Chained(true))
+// If chained is true, the component tag will be chained to the existing component tag.
+//
+// Example:
+// WithComponent(ctx, "component1", true) will return a new context with the component tag "component1"
+// WithComponent(ctx, "component2", true) will return a new context with the component tag "component1.component2"
+//
+// If chained is false, the component tag will replace the existing component tag.
+//
+// Example:
+// WithComponent(ctx, "component1", false) will return a new context with the component tag "component1"
+// WithComponent(ctx, "component2", false) will return a new context with the component tag "component2"
+func WithComponent(ctx context.Context, component string, chained bool) context.Context {
+	return WithTags(ctx, Key("component").String(component).Chained(chained))
 }
