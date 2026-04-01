@@ -87,3 +87,121 @@ func TestWithTags_Chained(t *testing.T) {
 		assert.Equal(t, "y", newSet[1].Value.Interface)
 	})
 }
+
+func TestMapTag(t *testing.T) {
+	t.Run("Map value holds a tag set", func(t *testing.T) {
+		m := Key("meta").Map(
+			Key("a").String("1"),
+			Key("b").String("2"),
+		)
+		require.Equal(t, MAP, m.Value.Type)
+		inner := m.Value.Interface.(Set)
+		require.Len(t, inner, 2)
+		assert.Equal(t, "1", tagStringInSet(inner, "a"))
+		assert.Equal(t, "2", tagStringInSet(inner, "b"))
+	})
+
+	t.Run("chained maps merge disjoint inner keys", func(t *testing.T) {
+		old := EmptySet.WithTags(Key("meta").Map(Key("a").String("1")))
+		merged := old.WithTags(Key("meta").Map(Key("b").String("2")).Chained(true))
+
+		require.Len(t, merged, 1)
+		inner := asMapSet(t, merged[0])
+		require.Len(t, inner, 2)
+		assert.Equal(t, "1", tagStringInSet(inner, "a"))
+		assert.Equal(t, "2", tagStringInSet(inner, "b"))
+	})
+
+	t.Run("chained maps merge same inner key for strings", func(t *testing.T) {
+		old := EmptySet.WithTags(Key("meta").Map(Key("x").String("a")))
+		// Inner tag for x must be Chained to concatenate; outer meta must be Chained to merge maps.
+		merged := old.WithTags(Key("meta").Map(Key("x").String("b").Chained(true)).Chained(true))
+
+		inner := asMapSet(t, merged[0])
+		require.Len(t, inner, 1)
+		assert.Equal(t, "a.b", tagStringInSet(inner, "x"))
+	})
+
+	t.Run("nested map merge chains inner map entries", func(t *testing.T) {
+		old := EmptySet.WithTags(Key("outer").Map(
+			Key("inner").Map(Key("k").String("v1")),
+		))
+		merged := old.WithTags(Key("outer").Map(
+			Key("inner").Map(Key("k").String("v2").Chained(true)).Chained(true),
+		).Chained(true))
+
+		require.Len(t, merged, 1)
+		outer := asMapSet(t, merged[0])
+		require.Len(t, outer, 1)
+		innerTag := outer[0]
+		require.Equal(t, MAP, innerTag.Value.Type)
+		inner := asMapSet(t, innerTag)
+		require.Len(t, inner, 1)
+		assert.Equal(t, "v1.v2", tagStringInSet(inner, "k"))
+	})
+
+	t.Run("nested merge three levels", func(t *testing.T) {
+		old := EmptySet.WithTags(Key("l1").Map(
+			Key("l2").Map(
+				Key("l3").Map(Key("leaf").String("a")),
+			),
+		))
+		merged := old.WithTags(Key("l1").Map(
+			Key("l2").Map(
+				Key("l3").Map(Key("leaf").String("b").Chained(true)).Chained(true),
+			).Chained(true),
+		).Chained(true))
+
+		l1 := asMapSet(t, merged[0])
+		l2 := asMapSet(t, l1[0])
+		l3 := asMapSet(t, l2[0])
+		assert.Equal(t, "a.b", tagStringInSet(l3, "leaf"))
+	})
+
+	t.Run("chained map merges inner map with extra keys at each layer", func(t *testing.T) {
+		old := EmptySet.WithTags(Key("meta").Map(
+			Key("keep").String("old"),
+			Key("shared").String("s1"),
+		))
+		merged := old.WithTags(Key("meta").Map(
+			Key("shared").String("s2").Chained(true),
+			Key("extra").String("new"),
+		).Chained(true))
+
+		inner := asMapSet(t, merged[0])
+		require.Len(t, inner, 3)
+		assert.Equal(t, "old", tagStringInSet(inner, "keep"))
+		assert.Equal(t, "s1.s2", tagStringInSet(inner, "shared"))
+		assert.Equal(t, "new", tagStringInSet(inner, "extra"))
+	})
+
+	t.Run("replace map when new tag is not chained", func(t *testing.T) {
+		old := EmptySet.WithTags(Key("meta").Map(Key("a").String("1")))
+		merged := old.WithTags(Key("meta").Map(Key("b").String("2")))
+
+		inner := asMapSet(t, merged[0])
+		require.Len(t, inner, 1)
+		assert.Equal(t, "2", tagStringInSet(inner, "b"))
+	})
+
+	t.Run("chained string on old map new string panics", func(t *testing.T) {
+		old := EmptySet.WithTags(Key("meta").Map(Key("a").String("1")))
+		merged := old.WithTags(Key("meta").String("b").Chained(true))
+		assert.Equal(t, "b", merged[0].Value.Interface)
+	})
+}
+
+func asMapSet(t *testing.T, tag *Tag) Set {
+	t.Helper()
+	require.Equal(t, MAP, tag.Value.Type)
+	return tag.Value.Interface.(Set)
+}
+
+func tagStringInSet(s Set, key Key) string {
+	for _, tg := range s {
+		if tg.Key == key && tg.Value.Type == STRING {
+			return tg.Value.Interface.(string)
+		}
+	}
+	return ""
+}

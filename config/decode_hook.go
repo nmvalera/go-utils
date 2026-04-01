@@ -1,8 +1,8 @@
 package config
 
 import (
+	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/go-viper/mapstructure/v2"
@@ -48,7 +48,8 @@ func StringToWeakSliceDecodeHookFunc(sep string) mapstructure.DecodeHookFunc {
 
 // StringToMapDecodeHookFunc is a mapstructure decode hook that converts a string to a map.
 // The string format is "key1:value1 key2:value2" where sep is the separator between pairs (default " ").
-// It also supports comma-separated pairs for pflag compatibility: "key1:value1,key2:value2".
+// It supports nested maps using additional colon-separated keys: "key:nestedKey:value".
+// The nesting depth is determined by the target type (e.g. map[string]map[string]int has depth 2).
 func StringToMapDecodeHookFunc(sep string) mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,
@@ -68,86 +69,47 @@ func StringToMapDecodeHookFunc(sep string) mapstructure.DecodeHookFunc {
 			return reflect.MakeMap(t).Interface(), nil
 		}
 
-		// Split by separator to get key:value pairs
-		pairs := strings.Split(str, sep)
-		result := reflect.MakeMap(t)
-
-		for _, pair := range pairs {
-			// Split each pair by ":"
-			parts := strings.SplitN(pair, ":", 2)
-			if len(parts) != 2 {
-				continue
+		// Parse string into a nested map[string]any with string leaves
+		segments := strings.Split(str, sep)
+		intermediate := make(map[string]any)
+		for _, segment := range segments {
+			parts := strings.Split(segment, ":")
+			if len(parts) < 2 {
+				return data, fmt.Errorf("invalid segment: %s", segment)
 			}
-
-			key := reflect.ValueOf(parts[0])
-
-			// Convert value to target type if needed
-			var targetVal reflect.Value
-			switch getKind(t.Elem().Kind()) {
-			case reflect.String:
-				targetVal = reflect.ValueOf(parts[1])
-			case reflect.Int:
-				intVal, err := strconv.ParseInt(parts[1], 10, 64)
-				if err != nil {
-					return data, err
-				}
-				// Convert to the exact int type
-				switch t.Elem().Kind() {
-				case reflect.Int:
-					targetVal = reflect.ValueOf(int(intVal))
-				case reflect.Int8:
-					targetVal = reflect.ValueOf(int8(intVal))
-				case reflect.Int16:
-					targetVal = reflect.ValueOf(int16(intVal))
-				case reflect.Int32:
-					targetVal = reflect.ValueOf(int32(intVal))
-				case reflect.Int64:
-					targetVal = reflect.ValueOf(intVal)
-				}
-			case reflect.Uint:
-				uintVal, err := strconv.ParseUint(parts[1], 10, 64)
-				if err != nil {
-					return data, err
-				}
-				// Convert to the exact uint type
-				switch t.Elem().Kind() {
-				case reflect.Uint:
-					targetVal = reflect.ValueOf(uint(uintVal))
-				case reflect.Uint8:
-					targetVal = reflect.ValueOf(uint8(uintVal))
-				case reflect.Uint16:
-					targetVal = reflect.ValueOf(uint16(uintVal))
-				case reflect.Uint32:
-					targetVal = reflect.ValueOf(uint32(uintVal))
-				case reflect.Uint64:
-					targetVal = reflect.ValueOf(uintVal)
-				}
-			case reflect.Float32:
-				floatVal, err := strconv.ParseFloat(parts[1], 64)
-				if err != nil {
-					return data, err
-				}
-				if t.Elem().Kind() == reflect.Float32 {
-					targetVal = reflect.ValueOf(float32(floatVal))
-				} else {
-					targetVal = reflect.ValueOf(floatVal)
-				}
-			case reflect.Bool:
-				boolVal, err := strconv.ParseBool(parts[1])
-				if err != nil {
-					return data, err
-				}
-				targetVal = reflect.ValueOf(boolVal)
-			default:
-				// For other types, just use the string value
-				targetVal = reflect.ValueOf(parts[1])
-			}
-
-			result.SetMapIndex(key, targetVal)
+			setNestedMapValue(intermediate, parts[:len(parts)-1], parts[len(parts)-1])
 		}
 
-		return result.Interface(), nil
+		// Let mapstructure handle all type conversions
+		targetPtr := reflect.New(t)
+		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+			WeaklyTypedInput: true,
+			Result:           targetPtr.Interface(),
+		})
+		if err != nil {
+			return data, err
+		}
+		if err := decoder.Decode(intermediate); err != nil {
+			return data, err
+		}
+
+		return targetPtr.Elem().Interface(), nil
 	}
+}
+
+// setNestedMapValue sets a value in a nested map[string]any structure.
+// keys is the path of map keys, value is the leaf string value.
+func setNestedMapValue(m map[string]any, keys []string, value string) {
+	if len(keys) == 1 {
+		m[keys[0]] = value
+		return
+	}
+	sub, ok := m[keys[0]].(map[string]any)
+	if !ok {
+		sub = make(map[string]any)
+		m[keys[0]] = sub
+	}
+	setNestedMapValue(sub, keys[1:], value)
 }
 
 // PtrToValueDecodeHookFunc is a mapstructure decode hook that converts a pointer to a value

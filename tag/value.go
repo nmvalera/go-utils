@@ -18,6 +18,8 @@ const (
 	STRING
 	// OBJECT is a generic object Type Value.
 	OBJECT
+	// MAP is a map of tags Type Value.
+	MAP
 )
 
 // Value represents a tag value.
@@ -58,4 +60,9 @@ func StringValue(v string) Value {
 // ObjectValue returns a Value with a generic object value set.
 func ObjectValue(v interface{}) Value {
 	return Value{Type: OBJECT, Interface: v}
+}
+
+// MapValue returns a Value with a map of tags value set.
+func MapValue(tags ...*Tag) Value {
+	return Value{Type: MAP, Interface: Set(tags)}
 }

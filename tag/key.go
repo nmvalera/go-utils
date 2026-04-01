@@ -28,3 +28,8 @@ func (k Key) String(s string) *Tag {
 func (k Key) Object(o interface{}) *Tag {
 	return &Tag{Key: k, Value: ObjectValue(o)}
 }
+
+// Map creates a new tag with a map of tags value.
+func (k Key) Map(tags ...*Tag) *Tag {
+	return &Tag{Key: k, Value: MapValue(tags...)}
+}

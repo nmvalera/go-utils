@@ -43,6 +43,42 @@ func TestTagsToFields(t *testing.T) {
 			tags:     []*tag.Tag{},
 			expected: []zapcore.Field{},
 		},
+		{
+			name: "map tag becomes zap.Dict with nested tag fields",
+			tags: []*tag.Tag{
+				tag.Key("meta").Map(
+					tag.Key("a").String("one"),
+					tag.Key("b").Int64(2),
+					tag.Key("c").Bool(true),
+				),
+			},
+			expected: []zapcore.Field{
+				zap.Dict("meta",
+					zap.String("a", "one"),
+					zap.Int64("b", 2),
+					zap.Bool("c", true),
+				),
+			},
+		},
+		{
+			name: "nested map tags produce nested zap.Dict",
+			tags: []*tag.Tag{
+				tag.Key("outer").Map(
+					tag.Key("inner").Map(
+						tag.Key("leaf").String("deep"),
+					),
+					tag.Key("s").String("flat"),
+				),
+			},
+			expected: []zapcore.Field{
+				zap.Dict("outer",
+					zap.Dict("inner",
+						zap.String("leaf", "deep"),
+					),
+					zap.String("s", "flat"),
+				),
+			},
+		},
 	}
 
 	for _, tt := range tests {

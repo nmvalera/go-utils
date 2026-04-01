@@ -27,6 +27,7 @@ func DefaultConfig() *Config {
 		Log:          log.DefaultConfig(),
 		StartTimeout: common.Ptr(15 * time.Second),
 		StopTimeout:  common.Ptr(15 * time.Second),
+		Tags:         map[string]any{},
 	}
 }
 
@@ -40,7 +41,7 @@ type Config struct {
 	Log               *log.Config                `key:"log"`
 	StartTimeout      *time.Duration             `key:"startTimeout" env:"START_TIMEOUT" flag:"start-timeout" desc:"Start timeout"`
 	StopTimeout       *time.Duration             `key:"stopTimeout" env:"STOP_TIMEOUT" flag:"stop-timeout" desc:"Stop timeout"`
-	Tags              map[string]string          `key:"tags" env:"TAGS" flag:"tags" desc:"Tags to attach to contexts (key=value pairs)"`
+	Tags              map[string]any             `key:"tags" env:"TAGS" flag:"tags" desc:"Tags to attach to contexts (key=value pairs)"`
 }
 
 func (cfg *Config) MarshalJSON() ([]byte, error) {
