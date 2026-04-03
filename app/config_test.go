@@ -15,6 +15,9 @@ import (
 
 func TestViperConfig(t *testing.T) {
 	v := config.NewViper()
+	v.Set("name", "test")
+	v.Set("version", "1.0.0")
+	v.Set("tags", "cluster:us-east-1 env:production nested:a:b nested:c:1 nested:d:1 nested:e:true")
 	v.Set("mainEp.addr", "localhost:8881")
 	v.Set("mainEp.http.readTimeout", "40s")
 	v.Set("mainEp.http.readHeaderTimeout", "41s")
@@ -46,6 +49,8 @@ func TestViperConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedCfg := &Config{
+		Name:    common.Ptr("test"),
+		Version: common.Ptr("1.0.0"),
 		MainEntrypoint: &kkrthttp.EntrypointConfig{
 			Addr: common.Ptr("localhost:8881"),
 			HTTP: &kkrthttp.ServerConfig{
@@ -89,12 +94,34 @@ func TestViperConfig(t *testing.T) {
 		},
 		StartTimeout: common.Ptr(10 * time.Second),
 		StopTimeout:  common.Ptr(20 * time.Second),
+		Tags: map[string]any{
+			"cluster": "us-east-1",
+			"env":     "production",
+			"nested": map[string]any{
+				"a": "b",
+				"c": "1",
+				"d": "1",
+				"e": "true",
+			},
+		},
 	}
 	assert.Equal(t, expectedCfg, cfg)
 }
 
 func TestEnv(t *testing.T) {
 	env, err := (&Config{
+		Name:    common.Ptr("test"),
+		Version: common.Ptr("1.0.0"),
+		Tags: map[string]any{
+			"env":     "production",
+			"cluster": "us-east-1",
+			"nested": map[string]any{
+				"a": "b",
+				"c": 1,
+				"d": 1.0,
+				"e": true,
+			},
+		},
 		MainEntrypoint: &kkrthttp.EntrypointConfig{
 			Addr: common.Ptr("localhost:8883"),
 			HTTP: &kkrthttp.ServerConfig{
@@ -141,6 +168,9 @@ func TestEnv(t *testing.T) {
 	}).Env()
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
+		"NAME":                                     "test",
+		"VERSION":                                  "1.0.0",
+		"TAGS":                                     "cluster:us-east-1 env:production nested:a:b nested:c:1 nested:d:1 nested:e:true",
 		"MAIN_EP_ADDR":                             "localhost:8883",
 		"MAIN_EP_HTTP_READ_TIMEOUT":                "40s",
 		"MAIN_EP_HTTP_READ_HEADER_TIMEOUT":         "41s",
@@ -219,6 +249,16 @@ func TestAddFlagsAndLoadEnv(t *testing.T) {
 		Log:          log.DefaultConfig(),
 		StartTimeout: common.Ptr(10 * time.Second),
 		StopTimeout:  common.Ptr(20 * time.Second),
+		Tags: map[string]any{
+			"env":     "production",
+			"cluster": "us-east-1",
+			"nested": map[string]any{
+				"a": "b",
+				"c": 1,
+				"d": 1.0,
+				"e": true,
+			},
+		},
 	}
 
 	v := config.NewViper()
@@ -236,10 +276,24 @@ func TestAddFlagsAndLoadEnv(t *testing.T) {
 		t.Setenv(k, v)
 	}
 
+	// After encode→decode round-trip through env vars, map[string]any loses type info:
+	// all leaf values become strings
+	expectedCfg := *cfg
+	expectedCfg.Tags = map[string]any{
+		"env":     "production",
+		"cluster": "us-east-1",
+		"nested": map[string]any{
+			"a": "b",
+			"c": "1",
+			"d": "1",
+			"e": "true",
+		},
+	}
+
 	loadedCfg := new(Config)
 	err = loadedCfg.Unmarshal(v)
 	require.NoError(t, err)
-	assert.Equal(t, cfg, loadedCfg)
+	assert.Equal(t, &expectedCfg, loadedCfg)
 }
 
 func TestUnmarshalFromDefaults(t *testing.T) {

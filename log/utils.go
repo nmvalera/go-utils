@@ -20,6 +20,8 @@ func TagsToFields(tags []*tag.Tag) []zap.Field {
 			fields = append(fields, zap.String(string(t.Key), t.Value.Interface.(string)))
 		case tag.OBJECT:
 			fields = append(fields, zap.Any(string(t.Key), t.Value.Interface))
+		case tag.MAP:
+			fields = append(fields, zap.Dict(string(t.Key), TagsToFields(t.Value.Interface.(tag.Set))...))
 		}
 	}
 	return fields

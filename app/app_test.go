@@ -774,9 +774,15 @@ func TestRunContext(t *testing.T) {
 			Log:          log.DefaultConfig(),
 			StartTimeout: common.Ptr(15 * time.Second),
 			StopTimeout:  common.Ptr(15 * time.Second),
-			Tags: map[string]string{
+			Tags: map[string]any{
 				"env":     "production",
 				"cluster": "us-east-1",
+				"nested": map[string]any{
+					"a": "b",
+					"c": 1,
+					"d": 1.0,
+					"e": true,
+				},
 			},
 		}
 		app, err := NewApp(cfg, WithLogger(zap.NewNop()), WithName("myapp"), WithVersion("1.0.0"))

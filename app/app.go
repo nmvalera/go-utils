@@ -105,8 +105,9 @@ func NewApp(cfg *Config, opts ...Option) (*App, error) {
 	if app.version != "" {
 		app.tags = app.tags.WithTags(tag.Key("version").String(app.version))
 	}
-	for k, v := range cfg.Tags {
-		app.tags = app.tags.WithTags(tag.Key(k).String(v))
+
+	if len(cfg.Tags) > 0 {
+		app.tags = app.tags.WithTags(tag.MapTags(cfg.Tags)...)
 	}
 
 	app.liveHealth = newHealth(app)

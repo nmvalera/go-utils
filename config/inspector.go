@@ -299,40 +299,64 @@ func (i *Inspector) encodeArrayValue(val reflect.Value) (processedVal reflect.Va
 	return processedElems, strings.Join(encodedElems, envSliceSep), nil
 }
 
-// encodeMapValue encodes the given map value and returns the processed value and the encoded string
-// The map is encoded by encoding each of its values and creating a map[string]string
-// The encoded string is in the format "key1:value1 key2:value2" with keys sorted alphabetically
+// encodeMapValue encodes the given map value and returns the processed value and the encoded string.
+// The map is encoded by encoding each of its values and creating a map[string]string.
+// The encoded string is in the format "key1:value1 key2:value2" with keys sorted alphabetically.
+// Nested maps are flattened with colon-joined key paths: "outer:inner:value".
 func (i *Inspector) encodeMapValue(val reflect.Value) (processedVal reflect.Value, encoded string, err error) {
-	// we create a new map with string keys and string values
 	processedMap := reflect.MakeMap(reflect.MapOf(reflect.TypeOf(""), reflect.TypeOf("")))
 
-	// Get all keys and sort them to ensure deterministic output
+	segments := i.flattenMap(nil, val)
+
+	for _, s := range segments {
+		processedMap.SetMapIndex(reflect.ValueOf(strings.Join(s.keys, ":")), reflect.ValueOf(s.value))
+	}
+
+	encodedSegments := make([]string, len(segments))
+	for idx, s := range segments {
+		encodedSegments[idx] = strings.Join(s.keys, ":") + ":" + s.value
+	}
+
+	return processedMap, strings.Join(encodedSegments, envSliceSep), nil
+}
+
+// segment represents a flattened map entry with a colon-separated key path and an encoded value.
+type segment struct {
+	keys  []string
+	value string
+}
+
+// flattenMap recursively flattens a map into a sorted list of segments.
+func (i *Inspector) flattenMap(prefix []string, val reflect.Value) []segment {
 	keys := val.MapKeys()
 	keyStrs := make([]string, len(keys))
 	keyMap := make(map[string]reflect.Value)
-	for i, key := range keys {
+	for idx, key := range keys {
 		keyStr := key.String()
-		keyStrs[i] = keyStr
+		keyStrs[idx] = keyStr
 		keyMap[keyStr] = key
 	}
 	sort.Strings(keyStrs)
 
-	// we iterate through the sorted keys and encode each value
-	encodedPairs := make([]string, 0, val.Len())
+	var segments []segment
 	for _, keyStr := range keyStrs {
 		mapVal := val.MapIndex(keyMap[keyStr])
-
-		_, encodedElem, err := i.encodeValue(mapVal)
-		if err != nil {
-			return reflect.Value{}, "", err
+		// Dereference interface values (e.g. map[string]any) to get the underlying value
+		for mapVal.Kind() == reflect.Interface {
+			mapVal = mapVal.Elem()
 		}
+		fullKey := append(append([]string{}, prefix...), keyStr)
 
-		// store in processed map as string
-		processedMap.SetMapIndex(reflect.ValueOf(keyStr), reflect.ValueOf(encodedElem))
-
-		// add to encoded pairs
-		encodedPairs = append(encodedPairs, fmt.Sprintf("%s:%s", keyStr, encodedElem))
+		if getKind(mapVal.Kind()) == reflect.Map {
+			segments = append(segments, i.flattenMap(fullKey, mapVal)...)
+		} else {
+			_, encodedElem, err := i.encodeValue(mapVal)
+			if err != nil {
+				continue
+			}
+			segments = append(segments, segment{keys: fullKey, value: encodedElem})
+		}
 	}
 
-	return processedMap, strings.Join(encodedPairs, envSliceSep), nil
+	return segments
 }

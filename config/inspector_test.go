@@ -80,24 +80,26 @@ func TestEncoder(t *testing.T) {
 	}
 
 	type TestConfig struct {
-		Bool               bool              `foo:"bool"`
-		String             string            `foo:"string"`
-		NilStringPtr       *string           `foo:"nil_string_ptr"`
-		Ints               IntsConfig        `foo:"ints"`
-		Uints              UintsConfig       `foo:"uints"`
-		Floats             FloatsConfig      `foo:"floats"`
-		Ptr                *PtrConfig        `foo:"ptr"`
-		Array              [2]string         `foo:"array"`
-		Slice              []string          `foo:"slice"`
-		Custom             CustomInt         `foo:"custom"`
-		CustomIntNil       *CustomInt        `foo:"custom_int_nil"`
-		ArrayCustom        [2]CustomInt      `foo:"array_custom"`
-		SliceCustom        []*CustomInt      `foo:"slice_custom"`
-		Interface          Interface         `foo:"interface"`
-		CustomInterface    *CustomInterface  `foo:"custom_interface"`
-		CustomInterfaceNil *CustomInterface  `foo:"custom_interface_nil"`
-		MapStringString    map[string]string `foo:"map_string_string"`
-		MapStringInt       map[string]int    `foo:"map_string_int"`
+		Bool                  bool                      `foo:"bool"`
+		String                string                    `foo:"string"`
+		NilStringPtr          *string                   `foo:"nil_string_ptr"`
+		Ints                  IntsConfig                `foo:"ints"`
+		Uints                 UintsConfig               `foo:"uints"`
+		Floats                FloatsConfig              `foo:"floats"`
+		Ptr                   *PtrConfig                `foo:"ptr"`
+		Array                 [2]string                 `foo:"array"`
+		Slice                 []string                  `foo:"slice"`
+		Custom                CustomInt                 `foo:"custom"`
+		CustomIntNil          *CustomInt                `foo:"custom_int_nil"`
+		ArrayCustom           [2]CustomInt              `foo:"array_custom"`
+		SliceCustom           []*CustomInt              `foo:"slice_custom"`
+		Interface             Interface                 `foo:"interface"`
+		CustomInterface       *CustomInterface          `foo:"custom_interface"`
+		CustomInterfaceNil    *CustomInterface          `foo:"custom_interface_nil"`
+		MapStringString       map[string]string         `foo:"map_string_string"`
+		MapStringInt          map[string]int            `foo:"map_string_int"`
+		MapStringMapStringInt map[string]map[string]int `foo:"map_string_map_string_int"`
+		MapStringAny          map[string]any            `foo:"map_string_any"`
 	}
 
 	cfg := TestConfig{
@@ -135,10 +137,22 @@ func TestEncoder(t *testing.T) {
 			nil,
 			common.Ptr(CustomInt(2)),
 		},
-		Interface:       &CustomInterface{},
-		CustomInterface: &CustomInterface{},
-		MapStringString: map[string]string{"test1": "test2"},
-		MapStringInt:    map[string]int{"test1": 1, "test2": 2},
+		Interface:             &CustomInterface{},
+		CustomInterface:       &CustomInterface{},
+		MapStringString:       map[string]string{"test1": "test2"},
+		MapStringInt:          map[string]int{"test1": 1, "test2": 2},
+		MapStringMapStringInt: map[string]map[string]int{"outer1": {"a": 1, "b": 2}, "outer2": {"c": 3}},
+		MapStringAny: map[string]any{
+			"flat": "value",
+			"nested": map[string]any{
+				"inner": "deep",
+			},
+			"deep": map[string]any{
+				"level1": map[string]any{
+					"level2": "leaf",
+				},
+			},
+		},
 	}
 
 	enc, err := inspector.Inspect(cfg)
@@ -334,6 +348,30 @@ func TestEncoder(t *testing.T) {
 			Value:      reflect.ValueOf(map[string]int{"test1": 1, "test2": 2}),
 			Processed:  reflect.ValueOf(map[string]string{"test1": "1", "test2": "2"}),
 			Encoded:    "test1:1 test2:2",
+		},
+		"MapStringMapStringInt": {
+			FieldParts: []string{"MapStringMapStringInt"},
+			TagParts:   map[string][]string{"foo": {"map_string_map_string_int"}},
+			Value:      reflect.ValueOf(map[string]map[string]int{"outer1": {"a": 1, "b": 2}, "outer2": {"c": 3}}),
+			Processed:  reflect.ValueOf(map[string]string{"outer1:a": "1", "outer1:b": "2", "outer2:c": "3"}),
+			Encoded:    "outer1:a:1 outer1:b:2 outer2:c:3",
+		},
+		"MapStringAny": {
+			FieldParts: []string{"MapStringAny"},
+			TagParts:   map[string][]string{"foo": {"map_string_any"}},
+			Value: reflect.ValueOf(map[string]any{
+				"flat": "value",
+				"nested": map[string]any{
+					"inner": "deep",
+				},
+				"deep": map[string]any{
+					"level1": map[string]any{
+						"level2": "leaf",
+					},
+				},
+			}),
+			Processed: reflect.ValueOf(map[string]string{"deep:level1:level2": "leaf", "flat": "value", "nested:inner": "deep"}),
+			Encoded:   "deep:level1:level2:leaf flat:value nested:inner:deep",
 		},
 	}
 	require.Len(t, enc, len(expected))

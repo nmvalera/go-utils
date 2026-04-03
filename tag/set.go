@@ -1,5 +1,7 @@
 package tag
 
+import "fmt"
+
 var EmptySet = Set{}
 
 // Set represents a immutable set of
@@ -34,14 +36,26 @@ func (s Set) WithTags(tags ...*Tag) Set {
 func merge(oldTag, newTag *Tag) *Tag {
 	if newTag.chained != nil && *newTag.chained {
 		if oldTag.Value.Type == STRING {
-			chained := true
 			return &Tag{
-				Key:     oldTag.Key,
-				Value:   StringValue(oldTag.Value.Interface.(string) + "." + newTag.Value.Interface.(string)),
-				chained: &chained,
+				Key:   oldTag.Key,
+				Value: StringValue(oldTag.Value.Interface.(string) + "." + newTag.Value.Interface.(string)),
 			}
 		}
-		panic("cannot chain non-string values")
+
+		if oldTag.Value.Type == MAP && newTag.Value.Type == MAP {
+			oldTags := oldTag.Value.Interface.(Set)
+			newTags := newTag.Value.Interface.(Set)
+			return &Tag{
+				Key:   oldTag.Key,
+				Value: MapValue(oldTags.WithTags(newTags...)...),
+			}
+		}
+
+		if oldTag.Value.Type == MAP {
+			return newTag.Copy()
+		}
+
+		panic(fmt.Sprintf("cannot chain %T with %T for key %s", oldTag.Value.Type, newTag.Value.Type, oldTag.Key))
 	}
 	return newTag.Copy()
 }
