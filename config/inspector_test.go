@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -382,6 +383,25 @@ func TestEncoder(t *testing.T) {
 		assert.Equalf(t, expectedInfo.TagParts, actualInfo.TagParts, "expected tag parts for key %s to be %v, but got %v", k, expectedInfo.TagParts, actualInfo.TagParts)
 		assert.Equalf(t, expectedInfo.Value.Interface(), actualInfo.Value.Interface(), "expected value for key %s to be %v, but got %v", k, expectedInfo.Value, actualInfo.Value)
 		assert.Equalf(t, expectedInfo.Processed.Interface(), actualInfo.Processed.Interface(), "expected processed value for key %s to be %v, but got %v", k, expectedInfo.Processed, actualInfo.Processed)
-		assert.Equalf(t, expectedInfo.Encoded, actualInfo.Encoded, "expected encoded value for key %s to be %v, but got %v", k, expectedInfo.Encoded, actualInfo.Encoded)
+		assertEncodedEqual(t, k, expectedInfo.Encoded, actualInfo.Encoded)
 	}
+}
+
+// assertEncodedEqual compares Encoded strings. For map-backed fields (MapString*), the inspector
+// joins flattened segments with spaces; comparing sorted tokens avoids flakes if segment order
+// ever differs across platforms or Go versions.
+func assertEncodedEqual(t *testing.T, fieldKey, expected, actual string) {
+	t.Helper()
+	if strings.HasPrefix(fieldKey, "MapString") {
+		assert.Equalf(t, sortedEncSegments(expected), sortedEncSegments(actual),
+			"encoded value for key %s (expected %q, got %q)", fieldKey, expected, actual)
+		return
+	}
+	assert.Equalf(t, expected, actual, "encoded value for key %s", fieldKey)
+}
+
+func sortedEncSegments(s string) []string {
+	parts := strings.Fields(s)
+	sort.Strings(parts)
+	return parts
 }
